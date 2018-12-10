@@ -12,7 +12,7 @@ import java.util.List;
  * 对data的操作通过DataSource来完成，最好不要自己操作data
  */
 public class DataSource {
-
+    private String t = "adada";
     private List<MultiTypeItem> data;
     private MultiTypeAdapter adapter;
 
