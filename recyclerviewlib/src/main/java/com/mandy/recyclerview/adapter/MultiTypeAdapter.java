@@ -39,7 +39,6 @@ import java.util.Map;
 /**
  * Created on 2017/7/5.
  */
-
 public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecyclerView> implements RecyclerView.OnItemTouchListener {
     //    public final static int SIMPLE_ANIMATION = R.id.simpleAnimation;
     public final static int LOAD_MORE_TYPE = 11100819;
@@ -155,7 +154,6 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
     @NonNull
     @Override
     public ViewHolderForRecyclerView onCreateViewHolder(@NonNull ViewGroup parent, int layoutId) {
-        Logger.log("onCreateViewHolder lastone==" + (layoutId == LOAD_MORE_TYPE));
         if (layoutId == INVALID) {
             throw new IllegalArgumentException("layoutId should not be INVALID");
         }
@@ -232,9 +230,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
                 recycledViewPool = new RecyclerView.RecycledViewPool();
                 pool.put(key, recycledViewPool);
             }
-//            if (recycledViewPool != rv.getRecycledViewPool()) {
             rv.setRecycledViewPool(recycledViewPool);
-//            }
         }
     }
 
@@ -261,7 +257,6 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
         if (payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
-            //payloads为空表示全更新？？待测
             onRefreshLocal(holder, payloads, position, getItemViewType(position));
         }
     }
@@ -333,7 +328,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
     }
 
     /**
-     * 在multiTypeAdapter外再包一层wrapperAdapter可能要失效
+     * 在multiTypeAdapter外再包一层wrapperAdapter是否可行需要测试
      */
     public View getChild(int position) {
         if (recyclerView == null) {
@@ -414,17 +409,9 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
         dataSource.addAll(items);
     }
 
-//    public void setData(List<MultiTypeItem> items, boolean notify) {
-//        this.data = items;
-//        if (notify) {
-//            notifyDataSetChanged();
-//        }
-//    }
-
-//    public List<MultiTypeItem> getData() {
-//        return data;
-//    }
-
+    /**
+     * 忽略，已经没什么用，到时候删除
+     * */
     @BindingAdapter(value = {"multiAdapter:multiAdapterPath", "multiAdapter:multiAdapterError"})
     public static void loadImg(View view, String path, Drawable error) {
         if (imgLoader == null) {
@@ -655,8 +642,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
     }
 
     /**
-     * 当上拉加载完成后使用该方法进行刷新，不要使用系统提供的
-     * notify等方法.
+     * 当上拉加载完成后使用该方法进行刷新，内部使用
      *
      * @param list 上拉加载获取到的数据，不是原数据列表
      */

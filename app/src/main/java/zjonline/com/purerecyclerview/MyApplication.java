@@ -17,12 +17,12 @@ public class MyApplication extends Application{
         refWatcher = setupLeakCanary();
 
 
-        new Thread() {
-            @Override
-            public void run() {
-                showDebugModeWarning();
-            }
-        }.start();
+//        new Thread() {
+//            @Override
+//            public void run() {
+//                showDebugModeWarning();
+//            }
+//        }.start();
     }
 
     private void showDebugModeWarning() {

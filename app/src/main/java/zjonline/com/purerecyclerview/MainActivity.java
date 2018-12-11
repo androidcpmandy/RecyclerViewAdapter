@@ -22,7 +22,6 @@ public class MainActivity extends Activity {
 
     private RecyclerView rv;
 
-    //    private static RecyclerView.RecycledViewPool pool = new RecyclerView.RecycledViewPool();
     private ArrayList<MultiTypeItem> list;
     private DataSource data;
 
@@ -97,6 +96,11 @@ public class MainActivity extends Activity {
         final LinearLayoutManager linearLayoutManager;
         rv.setLayoutManager(linearLayoutManager = new LinearLayoutManager(this));
         rv.setAdapter(adapter = new MultiTypeAdapter(data) {
+            @Override
+            protected void onItemClick(ViewHolderForRecyclerView viewHolder, int position, MultiTypeItem data) {
+                Log.e("mandy", "onItemClick position==" + position);
+            }
+
             @Override
             protected void initComponent(ViewHolderForRecyclerView holder, @NonNull ViewGroup parent, int layoutId) {
                 if (layoutId == R.layout.testlayout) {
@@ -243,8 +247,6 @@ public class MainActivity extends Activity {
         }
         Log.e("mandy", "type==" + type + " itemType==" + itemType);
         */
-
-//        data.remove(1,4);
 
     }
 }

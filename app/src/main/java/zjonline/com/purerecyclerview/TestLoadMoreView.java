@@ -17,7 +17,7 @@ public class TestLoadMoreView extends SimpleLoadMoreView {
         rootView.post(new Runnable() {
             @Override
             public void run() {
-                Log.e("mandy","w=="+rootView.getWidth()+" h=="+rootView.getHeight());
+                Log.e("mandy", "w==" + rootView.getWidth() + " h==" + rootView.getHeight());
             }
         });
     }
