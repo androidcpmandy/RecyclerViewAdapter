@@ -1,14 +1,14 @@
 package com.mandy.recyclerview.view;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
+import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 
 @SuppressLint("ViewConstructor")
 public class SimpleLoadMoreView extends AbstractLoadMoreView {
 
-    public SimpleLoadMoreView(Context context, int layoutId) {
-        super(context, layoutId);
+    public SimpleLoadMoreView(RecyclerView rv, int layoutId) {
+        super(rv, layoutId);
     }
 
     @Override
@@ -23,6 +23,26 @@ public class SimpleLoadMoreView extends AbstractLoadMoreView {
 
     @Override
     public void onCreateView(ViewGroup rootView) {
+
+    }
+
+    @Override
+    public void noMore() {
+
+    }
+
+    @Override
+    public void loading() {
+
+    }
+
+    @Override
+    public void error() {
+
+    }
+
+    @Override
+    public void reload() {
 
     }
 }

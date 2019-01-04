@@ -8,7 +8,7 @@
     android:focusableInTouchMode="true"
     tools:context=".MainActivity">
 
-    <android.support.v7.widget.RecyclerView
+    <zjonline.com.purerecyclerview.MyRV
         android:id="@+id/rv"
         android:layout_width="0dp"
         android:layout_height="0dp"

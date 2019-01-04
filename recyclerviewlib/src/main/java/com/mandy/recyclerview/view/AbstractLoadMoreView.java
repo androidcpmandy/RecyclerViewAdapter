@@ -1,41 +1,71 @@
 package com.mandy.recyclerview.view;
 
-import android.content.Context;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 /**
- * 自定义加载更多布局
+ * 自定义加载更多布局，建议在这里只进行控件ui的展示
  */
 public abstract class AbstractLoadMoreView extends FrameLayout {
 
-    public AbstractLoadMoreView(Context context, int layoutId) {
-        super(context);
-        LayoutInflater.from(context).inflate(layoutId, this, true);
+    protected boolean vertical;
+
+    public AbstractLoadMoreView(RecyclerView recyclerView, int layoutId) {
+        super(recyclerView.getContext());
+        LayoutInflater.from(recyclerView.getContext()).inflate(layoutId, this, true);
         onCreateView(this);
-        ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+        if (layoutManager instanceof GridLayoutManager) {
+            throw new IllegalStateException("layoutManager only can be LinearLayoutManager");
+        }
+        LinearLayoutManager llm = (LinearLayoutManager) layoutManager;
+        int widthMode, heightMode;
+        if (llm.getOrientation() == LinearLayoutManager.VERTICAL) {
+            vertical = true;
+            widthMode = ViewGroup.LayoutParams.MATCH_PARENT;
+            heightMode = ViewGroup.LayoutParams.WRAP_CONTENT;
+        } else {
+            vertical = false;
+            widthMode = ViewGroup.LayoutParams.WRAP_CONTENT;
+            heightMode = ViewGroup.LayoutParams.MATCH_PARENT;
+        }
+        ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(widthMode, heightMode);
         setLayoutParams(lp);
     }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        startLoading();
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        stopLoading();
-    }
-
     /**
-     * 可以做一些加载的动画
+     * 正在加载的动画
      */
     public abstract void startLoading();
 
+    /**
+     * 结束动画
+     */
     public abstract void stopLoading();
 
     public abstract void onCreateView(ViewGroup rootView);
+
+    /**
+     * 没有更多数据可以加载，在这里设置对应控件状态
+     */
+    public abstract void noMore();
+
+    /**
+     * 加载更多数据，在这里设置对应控件状态
+     */
+    public abstract void loading();
+
+    /**
+     * 网络加载异常，在这里设置对应控件状态
+     */
+    public abstract void error();
+
+    /**
+     * 网络异常重新加载，在这里设置对应控件状态
+     */
+    public abstract void reload();
 }

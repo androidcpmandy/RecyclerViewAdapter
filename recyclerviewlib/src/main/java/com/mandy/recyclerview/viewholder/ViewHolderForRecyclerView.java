@@ -1,33 +1,32 @@
 package com.mandy.recyclerview.viewholder;
 
-import android.content.Context;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.util.SparseArrayCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.TextView;
 
-import com.mandy.recyclerview.R;
-import com.mandy.recyclerview.adapter.MultiTypeAdapter;
-
 /**
  * Created on 2017/7/4.
  */
-
 public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
     private View rootView;
-    private RecyclerView recyclerView;
+    //    private RecyclerView recyclerView;
     private SparseArrayCompat<RecyclerView> nestedRecyclerViews;//rootView上的rv
     private SparseArray<View> views;
+    private int offset;
 
-    public ViewHolderForRecyclerView(RecyclerView recyclerView, View rootView) {
+    public ViewHolderForRecyclerView(View rootView, int offset) {
         super(rootView);
         this.rootView = rootView;
-        this.recyclerView = recyclerView;
         views = new SparseArray<>();
+        this.offset = offset;
+    }
+
+    public ViewHolderForRecyclerView(View rootView) {
+        this(rootView, 0);
     }
 
     public View getRootView() {
@@ -98,11 +97,17 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                View rootView = recyclerView.findContainingItemView(view);
-                if (rootView != null) {
-                    int pos = (int) rootView.getTag(R.id.position);
-                    listener.onClick(view, pos);
+                int position = getAdapterPosition() - offset;
+                if (position != RecyclerView.NO_POSITION) {
+                    listener.onClick(view, position);
                 }
+
+
+//                View rootView = recyclerView.findContainingItemView(view);
+//                if (rootView != null) {
+//                    int pos = (int) rootView.getTag(R.id.position);
+//                    listener.onClick(view, pos);
+//                }
             }
         });
 
@@ -115,10 +120,9 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
     /**
      * 在Application中调用MultiTypeAdapter的createLoader，否则无法获取到网络图片
      */
-    public void setImageBitmapFromNet(Context context, int viewId, String path, int defaultResourceId) {
-        MultiTypeAdapter.loadImg(getView(viewId), path, ContextCompat.getDrawable(context, defaultResourceId));
-    }
-
+//    public void setImageBitmapFromNet(Context context, int viewId, String path, int defaultResourceId) {
+//        MultiTypeAdapter.loadImg(getView(viewId), path, ContextCompat.getDrawable(context, defaultResourceId));
+//    }
     public void setImageBitmap(int viewId, int resId) {
         getView(viewId).setBackgroundResource(resId);
     }

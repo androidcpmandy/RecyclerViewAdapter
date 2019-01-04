@@ -8,11 +8,11 @@ import android.support.v7.widget.RecyclerView;
 
 import com.mandy.recyclerview.log.Logger;
 
-public class SnappingLinearLayoutManager extends LinearLayoutManager{
+public class SnappingLinearLayoutManager extends LinearLayoutManager {
 
     private ScrollListener listener;
 
-    public SnappingLinearLayoutManager(Context context){
+    public SnappingLinearLayoutManager(Context context) {
         super(context);
     }
 
@@ -28,8 +28,8 @@ public class SnappingLinearLayoutManager extends LinearLayoutManager{
         startSmoothScroll(smoothScroller);
     }
 
-    public void addOnScrollListener(ScrollListener listener){
-        this.listener=listener;
+    public void addOnScrollListener(ScrollListener listener) {
+        this.listener = listener;
     }
 
     private class TopSnappedSmoothScroller extends LinearSmoothScroller {
@@ -40,20 +40,20 @@ public class SnappingLinearLayoutManager extends LinearLayoutManager{
         @Override
         protected void onStart() {
             super.onStart();
-            if (listener!=null) {
+            if (listener != null) {
                 listener.onStart();
             }
-            Logger.log("onStart=="+getTargetPosition());
+            Logger.log("onStart==" + getTargetPosition());
         }
 
         @Override
         protected void onStop() {
             super.onStop();
-            if (listener!=null) {
+            if (listener != null) {
                 listener.onStop();
                 listener.onStopForce();
             }
-            Logger.log("onstop"+isRunning());
+            Logger.log("onstop" + isRunning());
         }
 
         @Override
@@ -68,9 +68,11 @@ public class SnappingLinearLayoutManager extends LinearLayoutManager{
         }
     }
 
-    public interface ScrollListener{
+    public interface ScrollListener {
         void onStart();
+
         void onStop();
+
         void onStopForce();
     }
 }

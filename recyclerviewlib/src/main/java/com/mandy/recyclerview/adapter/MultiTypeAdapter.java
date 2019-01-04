@@ -1,32 +1,36 @@
 package com.mandy.recyclerview.adapter;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
-import android.databinding.BindingAdapter;
-import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Parcelable;
+import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.SparseArrayCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SimpleItemAnimator;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.mandy.recyclerview.R;
 import com.mandy.recyclerview.bean.MultiTypeItem;
 import com.mandy.recyclerview.exception.InvalidMethodException;
+import com.mandy.recyclerview.interfaces.State;
+import com.mandy.recyclerview.itemanimator.CustomDefaultItemAnimator;
+import com.mandy.recyclerview.layoutmanager.SmoothScroller;
 import com.mandy.recyclerview.log.Logger;
+import com.mandy.recyclerview.view.DefaultLoadMoreView;
+import com.mandy.recyclerview.view.StubView;
+import com.mandy.recyclerview.viewholder.LoadMoreViewHolder;
 import com.mandy.recyclerview.viewholder.ViewHolderForRecyclerView;
 
 import java.util.ArrayList;
@@ -39,68 +43,50 @@ import java.util.Map;
 /**
  * Created on 2017/7/5.
  */
-public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecyclerView> implements RecyclerView.OnItemTouchListener {
+public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements RecyclerView.OnItemTouchListener {
+
+    private boolean debuggable = true;
     //    public final static int SIMPLE_ANIMATION = R.id.simpleAnimation;
     public final static int LOAD_MORE_TYPE = 11100819;
-    //    private final boolean supportDataBinding;
-//    private boolean useMandy;//原来使用的一个屏幕适配库，不使用的情况下直接设置false即可
-    //    private List<MultiTypeItem> data;
     private DataSource dataSource;
     private GestureDetectorCompat gestureDetectorCompat;
-    private RecyclerView recyclerView;
+    RecyclerView recyclerView;
     private boolean setFooterEnable;
-    private static Loader imgLoader;
-
-    private Map<String, RecyclerView.RecycledViewPool> pool;
+    public RecyclerView.RecycledViewPool pool;
     private Map<Integer, SparseArrayCompat<Parcelable>> states;
 
     private DataObserver observer = new DataObserver();
 
-    private boolean loadMore;//是否允许加载更多
     private final static int INVALID = -1;
     private boolean removeByAdapter;
-    //    private boolean addByAdapter;
-//    private View tempView;
     private boolean loading;
     private boolean withoutAnimation;
     private boolean saveSate;
+    private int state;
+    private Runnable loadMoreRunnable;
+    private int rvDirection = INVALID;
+    private boolean loadingAlways;
+    private boolean loadSuccess;
+
+    public MultiTypeAdapter() {
+    }
 
     public MultiTypeAdapter(DataSource dataSource) {
         this.dataSource = dataSource;
     }
-//    public MultiTypeAdapter() {
-//        this(new ArrayList<MultiTypeItem>(), false);
-//    }
 
-//    public MultiTypeAdapter(List<MultiTypeItem> data) {
-//        this(data, false);
-//    }
-
-//    public MultiTypeAdapter(List<MultiTypeItem> data, boolean useMandy) {
-//        this.data = data;
-//        this.useMandy = useMandy;
-//    }
-
-    public static void createLoader(Context context, Loader loader, boolean printLog) {
-        if (context instanceof Activity) {
-            Toast.makeText(context, "需要在Application中调用", Toast.LENGTH_LONG).show();
-            return;
-        }
-        Logger.setDebuggable(printLog);
-        imgLoader = loader;
+    public DataSource getDataSource() {
+        return dataSource;
     }
 
-    public interface Loader {
-        void loadImg(View view, String path, Drawable error);
+    void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (dataSource.isEmpty()) {
-            return loadMore ? LOAD_MORE_TYPE : INVALID;
-        }
         int count = dataSource.size();
-        if (position == count && loadMore) {
+        if (position == count && showLoadMore()) {
             return LOAD_MORE_TYPE;
         } else if (position < count) {
             return dataSource.get(position).getType();
@@ -119,18 +105,25 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
 
     @Override
     public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
-        Logger.log("onAttachedToRecyclerView");
+//        Logger.log("onAttachedToRecyclerView");
         super.onAttachedToRecyclerView(recyclerView);
         registerAdapterDataObserver(observer);
-        dataSource.setAdapter(this);
+        if (dataSource != null) {
+            dataSource.setAdapter(this);
+            dataSource.applyConfig();
+        }
         this.recyclerView = recyclerView;
+        recyclerView.setHasFixedSize(true);
         recyclerView.addOnItemTouchListener(this);
         if (withoutAnimation) {
             recyclerView.setItemAnimator(null);
         } else {
             RecyclerView.ItemAnimator itemAnimator = recyclerView.getItemAnimator();
-            if (itemAnimator instanceof SimpleItemAnimator) {
-                ((SimpleItemAnimator) itemAnimator).setSupportsChangeAnimations(false);
+            if (itemAnimator instanceof DefaultItemAnimator) {
+                recyclerView.setItemAnimator(new CustomDefaultItemAnimator());
+                CustomDefaultItemAnimator animator = (CustomDefaultItemAnimator) recyclerView.getItemAnimator();
+                animator.setSupportsChangeAnimations(false);
+                animator.setChangeDuration(0);
             }
         }
         gestureDetectorCompat = new GestureDetectorCompat(recyclerView.getContext(), new SingleClick());
@@ -140,12 +133,12 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
                 setFooter();
             }
         });
-        Logger.setDebuggable(isApkInDebug(recyclerView.getContext()));
+        Logger.setDebuggable(debuggable && isApkInDebug(recyclerView.getContext()));
     }
 
     @Override
     public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
-        Logger.log("onDetachedFromRecyclerView");
+//        Logger.log("onDetachedFromRecyclerView");
         super.onDetachedFromRecyclerView(recyclerView);
         unregisterAdapterDataObserver(observer);
         recyclerView.removeOnItemTouchListener(this);
@@ -153,24 +146,58 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
 
     @NonNull
     @Override
-    public ViewHolderForRecyclerView onCreateViewHolder(@NonNull ViewGroup parent, int layoutId) {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int layoutId) {
         if (layoutId == INVALID) {
             throw new IllegalArgumentException("layoutId should not be INVALID");
         }
         View rootView;
+        ViewHolderForRecyclerView holder;
+        if (rvDirection == INVALID) {
+            rvDirection = takeDirection();
+        }
+        boolean vertical = rvDirection == LinearLayoutManager.VERTICAL;
         if (layoutId == LOAD_MORE_TYPE) {
-            View loadMoreView = createLoadMoreView();
-            rootView = loadMoreView == null ? LayoutInflater.from(parent.getContext()).inflate(R.layout.default_multi_adapter_loading, parent, false) : loadMoreView;
+            View loadMoreView = createLoadMoreView(recyclerView);
+            int loadMoreId = vertical ? R.layout.default_multi_adapter_loading_vertical :
+                    R.layout.default_multi_adapter_loading_horizontal;
+            rootView = loadMoreView == null ? new DefaultLoadMoreView(recyclerView, loadMoreId) : loadMoreView;
+            holder = new LoadMoreViewHolder(rootView);
         } else {
             rootView = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
+            holder = new ViewHolderForRecyclerView(rootView, offset());
+
+//            holder = new ViewHolderForRecyclerView(generateStubView(layoutId), offset());
         }
-        ViewHolderForRecyclerView holder = new ViewHolderForRecyclerView(recyclerView, rootView);
+
         if (layoutId != LOAD_MORE_TYPE) {
-            bindRecycledPool(holder, layoutId);//必须放到initComponent之前设置pool
+            bindRecycledPool(holder);
             initComponentAndCheck(holder, parent, layoutId);
+            bindRecycledPool(holder);
             makeRecycledPoolWorkPerfect(holder);
         }
         return holder;
+    }
+
+    private int takeDirection() {
+        RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+        if (layoutManager instanceof GridLayoutManager) {
+            throw new IllegalStateException("layoutManager only can be LinearLayoutManager");
+        }
+        LinearLayoutManager llm = (LinearLayoutManager) layoutManager;
+        return llm.getOrientation();
+    }
+
+    /**
+     * 有问题，弃用
+     */
+    private StubView generateStubView(int layoutId) {
+        StubView stubView = new StubView(recyclerView.getContext());
+        LayoutInflater.from(recyclerView.getContext()).inflate(layoutId, stubView, true);
+        View child = stubView.getChildAt(0);
+        ViewGroup.LayoutParams lp = child.getLayoutParams();
+        RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(lp.width, lp.height);
+        stubView.setLayoutParams(params);
+        return stubView;
     }
 
     /**
@@ -207,34 +234,43 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
         }
     }
 
-//    protected View useMandyLibInflateView(ViewGroup parent, int layoutId) {
-//        return null;
-//    }
-
-    private void bindRecycledPool(ViewHolderForRecyclerView holder, int viewType) {
+    @SuppressLint("ObsoleteSdkInt")
+    private void bindRecycledPool(ViewHolderForRecyclerView holder) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            return;
+        }
         List<RecyclerView> nestedRecyclerViews = findNestedRecyclerView(holder.getRootView());
         if (nestedRecyclerViews.isEmpty()) {
             return;
         }
         if (pool == null) {
-            pool = new HashMap<>();
+            pool = new RecyclerView.RecycledViewPool();
         }
         for (RecyclerView rv : nestedRecyclerViews) {
             if (rv.getId() == View.NO_ID) {
                 rv.setId(View.generateViewId());
             }
-            String key = viewType + "_" + rv.getId();
-            holder.addRecyclerView(rv.getId(), rv);
-            RecyclerView.RecycledViewPool recycledViewPool = pool.get(key);
-            if (recycledViewPool == null) {
-                recycledViewPool = new RecyclerView.RecycledViewPool();
-                pool.put(key, recycledViewPool);
+//            String key = viewType + "_" + rv.getId();
+            if (holder.getNestedRecyclerView(rv.getId()) == null) {
+                holder.addRecyclerView(rv.getId(), rv);
             }
-            rv.setRecycledViewPool(recycledViewPool);
+//            RecyclerView.RecycledViewPool recycledViewPool = pool.get(key);
+//            if (recycledViewPool == null) {
+//                recycledViewPool = new RecyclerView.RecycledViewPool();
+//                pool.put(key, recycledViewPool);
+//            }
+//            rv.setRecycledViewPool(recycledViewPool);
+
+//            rv.setHasFixedSize(true);
+//            RecyclerView.ItemAnimator itemAnimator = rv.getItemAnimator();
+//            if (itemAnimator instanceof SimpleItemAnimator) {
+//                ((SimpleItemAnimator) itemAnimator).setSupportsChangeAnimations(false);
+//            }
+            rv.setRecycledViewPool(pool);
         }
     }
 
-    protected List<RecyclerView> findNestedRecyclerView(View rootView) {
+    private List<RecyclerView> findNestedRecyclerView(View rootView) {
         List<RecyclerView> list = new ArrayList<>();
         if (rootView instanceof RecyclerView) {
             list.add((RecyclerView) rootView);
@@ -253,21 +289,30 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolderForRecyclerView holder, int position, @NonNull List<Object> payloads) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
         if (payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
-            onRefreshLocal(holder, payloads, position, getItemViewType(position));
+            onRefreshLocal((ViewHolderForRecyclerView) holder, payloads, position, getItemViewType(position));
         }
+
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolderForRecyclerView holder, int position) {
-        holder.getRootView().setTag(R.id.position, position);
-        if (loadMore && dataSource.size() == position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (position == RecyclerView.NO_POSITION) {
             return;
         }
-        onBindView(holder, dataSource.get(position), position, getItemViewType(position));
+//        holder.getRootView().setTag(R.id.position, position);
+        boolean result = showLoadMore();
+//        if (loadMore && dataSource.size() == position && holder instanceof LoadMoreViewHolder) {
+        if (result && dataSource.size() == position && holder instanceof LoadMoreViewHolder) {
+//            Logger.log("onbindview loadmore");
+            LoadMoreViewHolder loadMore = (LoadMoreViewHolder) holder;
+            loadMore.stateChange(state);
+            return;
+        }
+        onBindView((ViewHolderForRecyclerView) holder, dataSource.get(position), position, getItemViewType(position));
 //        if (holder.getRootView().getTag(R.id.simpleAnimation) instanceof Boolean && (Boolean) (holder.getRootView().getTag(R.id.simpleAnimation))) {
 //            holder.getRootView().setScaleX(0.8f);
 //            holder.getRootView().setScaleY(0.8f);
@@ -292,22 +337,44 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
      * 加载更多
      */
     protected void loadMore() {
+        Logger.log("加载更多");
     }
 
+    /**
+     * 加载过程中，loadMore布局被移除
+     * 在该方法中进行中断网络请求操作
+     */
+    @CallSuper
+    protected void abortLoadMore() {
+        Logger.log("中断加载");
+        dataSource.abort(true);
+    }
+
+    /**
+     * 网络加载失败的时候调用
+     */
+    protected void reload() {
+        Logger.log("重新加载");
+    }
+
+    /**
+     * 对于整个item设置点击可使用该方法，否则建议调用holder的setViewClickListener方法
+     */
     protected void onItemClick(ViewHolderForRecyclerView viewHolder, int position, MultiTypeItem data) {
     }
 
     /**
      * 使用自定义的加载更多布局
      */
-    protected View createLoadMoreView() {
+    protected View createLoadMoreView(RecyclerView recyclerView) {
         return null;
     }
 
     @Override
     public int getItemCount() {
         int count = dataSource != null ? dataSource.size() : 0;
-        return loadMore ? count + 1 : count;
+        boolean result = showLoadMore();
+        return result ? count + 1 : count;
     }
 
     /**
@@ -319,6 +386,18 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
     protected void onRefreshLocal(ViewHolderForRecyclerView holder, @NonNull List<Object> payloads, int position, int layoutId) {
     }
 
+    /**
+     * 单使用MultiTypeAdapter时用不到该方法，当MultiTypeAdapter在wrapAdapter内部时
+     * 可能需要重写该方法以获取正确的item位置信息
+     */
+    protected int offset() {
+        return 0;
+    }
+
+    private int getAdjustPosition(RecyclerView.ViewHolder holder) {
+        return holder.getAdapterPosition() - offset();
+    }
+
     @Override
     public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
         if (gestureDetectorCompat != null) {
@@ -327,26 +406,23 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
         return false;
     }
 
-    /**
-     * 在multiTypeAdapter外再包一层wrapperAdapter是否可行需要测试
-     */
-    public View getChild(int position) {
-        if (recyclerView == null) {
-            return null;
-        }
-        return recyclerView.getChildAt(position);
-    }
+//    public View getChild(int position) {
+//        if (recyclerView == null) {
+//            return null;
+//        }
+//        return recyclerView.getChildAt(position);
+//    }
 
-    public ViewHolderForRecyclerView getChildViewHolder(int position) {
-        if (recyclerView == null) {
-            return null;
-        }
-        View child = recyclerView.getChildAt(position);
-        if (child == null) {
-            return null;
-        }
-        return (ViewHolderForRecyclerView) recyclerView.getChildViewHolder(child);
-    }
+//    public ViewHolderForRecyclerView getChildViewHolder(int position) {
+//        if (recyclerView == null) {
+//            return null;
+//        }
+//        View child = recyclerView.getChildAt(position);
+//        if (child == null) {
+//            return null;
+//        }
+//        return (ViewHolderForRecyclerView) recyclerView.getChildViewHolder(child);
+//    }
 
     @Override
     public void onTouchEvent(RecyclerView rv, MotionEvent e) {
@@ -364,10 +440,18 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
             if (view == null) {
                 return false;
             }
-            ViewHolderForRecyclerView viewHolder = (ViewHolderForRecyclerView) recyclerView.getChildViewHolder(view);
-            int position = recyclerView.getChildAdapterPosition(view);
-            if (!loadMore || position < dataSource.size()) {
-                onItemClick(viewHolder, position, dataSource.get(position));
+            RecyclerView.ViewHolder viewHolder = recyclerView.getChildViewHolder(view);
+            if (!(viewHolder instanceof ViewHolderForRecyclerView)) {
+                return false;
+            }
+            int position = getAdjustPosition(viewHolder);
+            if (position == RecyclerView.NO_POSITION) {
+                return false;
+            }
+            boolean result = state == State.HIDE;
+//            if (!loadMore || position < dataSource.size()) {
+            if (result || position < dataSource.size()) {
+                onItemClick((ViewHolderForRecyclerView) viewHolder, position, dataSource.get(position));
             }
             return true;
         }
@@ -400,37 +484,41 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
         }
     }
 
-//    public void setData(List<MultiTypeItem> data) {
-//        setData(data, true);
-//    }
+    @Override
+    public void onViewDetachedFromWindow(@NonNull RecyclerView.ViewHolder holder) {
+//        Logger.log("onViewDetachedFromWindow pos==" + holder.getAdapterPosition());
+        super.onViewDetachedFromWindow(holder);
 
-    public void clearAndReset(@NonNull List<MultiTypeItem> items) {
-        dataSource.clear();
-        dataSource.addAll(items);
-    }
-
-    /**
-     * 忽略，已经没什么用，到时候删除
-     * */
-    @BindingAdapter(value = {"multiAdapter:multiAdapterPath", "multiAdapter:multiAdapterError"})
-    public static void loadImg(View view, String path, Drawable error) {
-        if (imgLoader == null) {
+        /*
+         * wrapAdapter调用onViewDetachedFromWindow传递进来的holder
+         * 不一定是ViewHolderForRecyclerView，可能是wrapAdapter自带
+         * holder
+         * */
+        if (!(holder instanceof ViewHolderForRecyclerView)) {
             return;
         }
-        Logger.log("dataBinding loadImg");
-        imgLoader.loadImg(view, path, error);
-    }
+        int position = getAdjustPosition(holder);
+        if ((position == getItemCount() - 1 || position == -1) && showLoadMore()
+                && holder instanceof LoadMoreViewHolder) {
+            if (state == State.ERROR) {
+                transformLoadMoreState(State.RELOAD, false);
+            } else if (!loadingAlways && (state == State.LOAD_MORE || state == State.RELOAD)) {
+                if (!loadSuccess) {
+                    loadComplete();
+                    abortLoadMore();
+                } else {
+                    loadSuccess = false;
+                }
+            }
+            ((LoadMoreViewHolder) holder).stopLoading(state);
+            return;
+        }
 
-
-    @Override
-    public void onViewDetachedFromWindow(@NonNull ViewHolderForRecyclerView holder) {
-        Logger.log("onViewDetachedFromWindow pos==" + holder.getAdapterPosition());
-        super.onViewDetachedFromWindow(holder);
-        SparseArrayCompat<RecyclerView> nestedRecyclerViews = holder.getNestedRecyclerViews();
+        SparseArrayCompat<RecyclerView> nestedRecyclerViews = ((ViewHolderForRecyclerView) holder).getNestedRecyclerViews();
         if (!saveSate || nestedRecyclerViews == null || nestedRecyclerViews.size() == 0) {
             return;
         }
-        int pos = holder.getAdapterPosition();
+        int pos = getAdjustPosition(holder);
         if (pos == RecyclerView.NO_POSITION) {
             return;
         }
@@ -461,7 +549,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
         }
         RecyclerView.LayoutParams layoutParams = (RecyclerView.LayoutParams) rootView.getLayoutParams();
         int left = llm.getDecoratedLeft(rootView) - layoutParams.leftMargin;
-        if (holder.getAdapterPosition() == 0 && left == 0) {
+        if (getAdjustPosition(holder) == 0 && left == 0) {
             return;
         }
         if (states == null) {
@@ -481,20 +569,34 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
     }
 
     @Override
-    public void onViewAttachedToWindow(@NonNull ViewHolderForRecyclerView holder) {
-        Logger.log("onViewAttachedToWindow");
+    public void onViewAttachedToWindow(@NonNull RecyclerView.ViewHolder holder) {
+//        Logger.log("onViewAttachedToWindow");
         super.onViewAttachedToWindow(holder);
-
-        if (loadMore && !loading && holder.getAdapterPosition() == dataSource.size()) {
-            loading = true;
-            loadMore();
+        if (!(holder instanceof ViewHolderForRecyclerView)) {
             return;
         }
-        SparseArrayCompat<RecyclerView> nestedRecyclerViews = holder.getNestedRecyclerViews();
+        boolean result = state == State.LOAD_MORE || state == State.ERROR || state == State.RELOAD;
+        //holder.getAdapterPosition() == datasource.size修改成如下，没问题吧？
+        if (result && getAdjustPosition(holder) == getItemCount() - 1 && holder instanceof LoadMoreViewHolder) {
+//            loadMoreAttach = true;
+
+            /*
+             * 以下五行是下滑移除loadMore后网络请求仍然能进行的逻辑
+             * */
+            if (loadingAlways) {
+                if (state == State.ERROR) {
+                    state = State.RELOAD;
+                }
+            }
+            transformLoadMoreState(state, false);
+            loadData((LoadMoreViewHolder) holder);
+            return;
+        }
+        SparseArrayCompat<RecyclerView> nestedRecyclerViews = ((ViewHolderForRecyclerView) holder).getNestedRecyclerViews();
         if (!saveSate || states == null || states.size() == 0 || nestedRecyclerViews == null || nestedRecyclerViews.size() == 0) {
             return;
         }
-        int pos = holder.getAdapterPosition();
+        int pos = getAdjustPosition(holder);
         int size = nestedRecyclerViews.size();
         for (int i = 0; i < size; i++) {
             RecyclerView recyclerView = nestedRecyclerViews.valueAt(i);
@@ -503,6 +605,34 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
             if (parcelables != null) {
                 Parcelable parcelable = parcelables.get(id);
                 recyclerView.getLayoutManager().onRestoreInstanceState(parcelable);
+            }
+        }
+    }
+
+    private void loadData(LoadMoreViewHolder holder) {
+        if (/*loadMoreAttach && */!loading) {
+            if (state == State.RELOAD || state == State.LOAD_MORE) {
+                loading = true;
+
+                loadSuccess = false;
+                dataSource.abort(false);
+                holder.startLoading();
+//                dataSource.setLoadSuccess(loadSuccess);
+
+                final int temp = state;
+                if (loadMoreRunnable == null) {
+                    loadMoreRunnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            if (temp == State.RELOAD) {
+                                reload();
+                            } else {
+                                loadMore();
+                            }
+                        }
+                    };
+                }
+                recyclerView.post(loadMoreRunnable);
             }
         }
     }
@@ -651,37 +781,107 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<ViewHolderForRecycler
             loadComplete();
             return;
         }
+        loadSuccess = true;
         dataSource.addAll(list);
         loadComplete();
     }
 
-    public void activateLoadMore(boolean loadMore) {
-        configRecyclerViewBehavior(withoutAnimation, saveSate, loadMore);
-    }
-
     /**
-     * 在网络请求失败的情况下需要手动调用该方法，达到重置loading的目的
+     * 在网络请求失败的情况下调用该方法，达到重置loading的目的
      * 否则重新上拉加载将无效
      */
-    public void loadComplete() {
+    private void loadComplete() {
         loading = false;
     }
 
-    /**
-     * @param saveSate 是否保存嵌套recyclerView的滑动位置
-     *                 调用该方法并且withoutAnimation设置为true后，不要在外部调用
-     *                 recyclerView.setItemAnimator否则withoutAnimation可能要失效
-     */
-    public void configRecyclerViewBehavior(boolean withoutAnimation, boolean saveSate, boolean loadMore) {
+    void configRecyclerViewBehavior(boolean withoutAnimation, boolean saveSate, @State int state,
+                                    boolean loadingAlways) {
         this.withoutAnimation = withoutAnimation;
-        if (recyclerView != null && withoutAnimation) {
-            recyclerView.setItemAnimator(null);
+        this.loadingAlways = loadingAlways;
+        if (recyclerView != null) {
+            RecyclerView.ItemAnimator itemAnimator = recyclerView.getItemAnimator();
+            if (withoutAnimation) {
+                recyclerView.setItemAnimator(null);
+            } else if (itemAnimator instanceof DefaultItemAnimator) {
+                recyclerView.setItemAnimator(new CustomDefaultItemAnimator());
+            }
         }
         this.saveSate = saveSate;
         if (!saveSate && states != null) {
             states.clear();
         }
-        this.loadMore = loadMore;
-        loading = false;
+
+        this.state = state;
+        loadComplete();
+    }
+
+    void transformLoadMoreState(@State int loadMoreState) {
+        transformLoadMoreState(loadMoreState, true);
+    }
+
+    private void transformLoadMoreState(@State int loadMoreState, final boolean resetLoading) {
+        if (resetLoading) {
+            loadComplete();
+        }
+        if (loadMoreState == State.HIDE) {
+            if (state != State.HIDE) {
+                state = State.HIDE;
+                /*
+                 * adapter内部有涉及到调用transformLoadMoreState，所以dataSource中state的变化
+                 * 需要放到transformLoadMoreState中处理
+                 * */
+                dataSource.updateState(state);
+                notifyItemRangeRemoved(getItemCount(), 1);
+            }
+            return;
+        }
+        int oldState = state;
+        state = loadMoreState;
+        dataSource.updateState(state);
+
+        if (recyclerView == null) {
+            return;
+        }
+        int childCount = recyclerView.getChildCount();
+        View last = recyclerView.getChildAt(childCount - 1);
+        if (last != null) {
+            RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(last);
+            if (holder == null || !(holder instanceof ViewHolderForRecyclerView)) {
+                return;
+            }
+            /*
+             * if分支保证加载更多item还在屏幕上
+             * */
+            if (holder instanceof LoadMoreViewHolder) {
+                onBindViewHolder(holder, getAdjustPosition(holder));
+            } else {
+                if (oldState != State.HIDE) {
+                    notifyItemRangeChanged(getItemCount() - 1, 1);
+                } else if (recyclerView.getLayoutManager() instanceof LinearLayoutManager) {
+                    notifyItemRangeInserted(getItemCount() - 1, 1);
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    int lastItem = layoutManager.findLastCompletelyVisibleItemPosition();
+                    if (lastItem == getItemCount() - 2) {
+                        SmoothScroller scroller = new SmoothScroller(
+                                recyclerView.getContext(), ((LinearLayoutManager) recyclerView.getLayoutManager()));
+                        scroller.setTargetPosition(getItemCount() - 1);
+                        scroller.layoutManager.startSmoothScroll(scroller);
+                    }
+                } else {
+                    notifyDataSetChanged();
+                }
+            }
+        }
+    }
+
+    private boolean showLoadMore() {
+        return state == State.LOAD_MORE || state == State.NO_MORE
+                || state == State.ERROR || state == State.RELOAD;
+    }
+
+    void moveToTop() {
+        if (recyclerView != null && getItemCount() > 0) {
+            recyclerView.scrollToPosition(0);
+        }
     }
 }

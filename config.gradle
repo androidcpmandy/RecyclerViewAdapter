@@ -1,0 +1,26 @@
+//本地引入AlignTextView库时需要添加，否则recyclerviewadapter项目识别不出，
+//当在setting.gradle移除掉AlignTextView库时，可以删除该配置文件
+
+ext {
+    configuration = [
+            appName       : "uiView",
+            package       : "mandy.com.uiviews",
+            compileVersion: 26,
+            minSdk        : 15,
+            targetSdk     : 26,
+            version_code  : 1,
+            version_name  : "0.0.1",
+    ]
+
+    libraries = [
+//            supportVersion    : "27.1.1",
+            supportVersion    : "26.1.0",
+            butterknife       : "7.0.1",
+            glide             : "3.6.1",
+            recycler_animators: "2.1.0",
+            circleimageview   : "2.0.0"
+    ]
+
+}
+
+

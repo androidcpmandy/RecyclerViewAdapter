@@ -4,7 +4,6 @@ import android.app.Application;
 import android.os.Looper;
 import android.widget.Toast;
 
-import com.squareup.leakcanary.LeakCanary;
 import com.squareup.leakcanary.RefWatcher;
 
 public class MyApplication extends Application{
@@ -14,7 +13,8 @@ public class MyApplication extends Application{
     @Override
     public void onCreate() {
         super.onCreate();
-        refWatcher = setupLeakCanary();
+
+//        refWatcher = setupLeakCanary();
 
 
 //        new Thread() {
@@ -37,14 +37,14 @@ public class MyApplication extends Application{
     }
 
 
-    private RefWatcher setupLeakCanary() {
-        if (LeakCanary.isInAnalyzerProcess(this)) {
-            return RefWatcher.DISABLED;
-        }
-        return LeakCanary.install(this);
-    }
+//    private RefWatcher setupLeakCanary() {
+//        if (LeakCanary.isInAnalyzerProcess(this)) {
+//            return RefWatcher.DISABLED;
+//        }
+//        return LeakCanary.install(this);
+//    }
 
-    public static RefWatcher getRefWatcher() {
-        return refWatcher;
-    }
+//    public static RefWatcher getRefWatcher() {
+//        return refWatcher;
+//    }
 }

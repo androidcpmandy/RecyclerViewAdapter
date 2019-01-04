@@ -12,8 +12,8 @@ public class Logger {
     private final static String CLASS_NAME = Logger.class.getCanonicalName();
     private final static String TAG = "mandy";
     private static int logLevel = ERROR;
-//    private static boolean isDebug = BuildConfig.DEBUG;
-    private static boolean isDebug ;
+    //    private static boolean isDebug = BuildConfig.DEBUG;
+    private static boolean isDebug;
     private static String logTag = TAG;
     private static StringBuilder stringBuilder = new StringBuilder();
 

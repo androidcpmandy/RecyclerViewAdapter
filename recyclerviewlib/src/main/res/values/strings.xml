@@ -1,7 +1,5 @@
 <resources>
     <string name="app_name">recyclerviewlib</string>
-
-
-    <item name="position" type="id"/>
+    <!--<item name="position" type="id"/>-->
     <item name="simpleAnimation" type="id"/>
 </resources>
