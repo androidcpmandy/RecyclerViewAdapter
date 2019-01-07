@@ -4,5 +4,5 @@ import android.view.View;
 
 public interface ItemClick<T> {
 
-    public void click(View view, T data);
+    void click(View view, T data);
 }

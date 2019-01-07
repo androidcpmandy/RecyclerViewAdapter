@@ -1,7 +1,6 @@
 package com.mandy.recyclerview.adapter;
 
 
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
@@ -24,8 +23,6 @@ public class DataSource {
     private List<MultiTypeItem> data;
     private MultiTypeAdapter adapter;
     private AdapterConfig config;
-    private Handler handler;
-//    private boolean noflash;
 
     private List<Task> pendingTasks;
     private boolean operationDisallow;
@@ -89,13 +86,6 @@ public class DataSource {
             }
         };
         runOrPend(OTHER, r);
-//        Task task = new Task(OTHER, r);
-//        if (!transaction) {
-//            task.execute();
-//        } else {
-//            flag |= OTHER;
-//            pendingTasks.add(task);
-//        }
     }
 
     public void add(@NonNull final MultiTypeItem item) {
@@ -352,9 +342,13 @@ public class DataSource {
      *
      * @param loadMore 重置后是否需要加载更多功能
      */
-    public void clearAndReset(@NonNull List<MultiTypeItem> items, boolean loadMore) {
+    public void clearAndReset(List<MultiTypeItem> items, boolean loadMore) {
         clear();
-        addAll(items);
+        if (items == null || items.isEmpty()) {
+            loadMore = false;
+        } else {
+            addAll(items);
+        }
         transformLoadMoreState(loadMore ? State.LOAD_MORE : State.HIDE);
         if (adapter != null) {
             adapter.moveToTop();
