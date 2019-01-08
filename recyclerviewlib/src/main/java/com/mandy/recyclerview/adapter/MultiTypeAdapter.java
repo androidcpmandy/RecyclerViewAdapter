@@ -109,7 +109,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         super.onAttachedToRecyclerView(recyclerView);
         registerAdapterDataObserver(observer);
         if (dataSource != null) {
-            dataSource.setAdapter(this);
+            dataSource.setAdapter(this, offset());
             dataSource.applyConfig();
         }
         this.recyclerView = recyclerView;
@@ -290,6 +290,9 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (!(holder instanceof ViewHolderForRecyclerView)) {
+            return;
+        }
         if (payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
@@ -300,12 +303,14 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (position == RecyclerView.NO_POSITION) {
+        if (position == invalidPosition() || !(holder instanceof ViewHolderForRecyclerView)) {
             return;
         }
-//        holder.getRootView().setTag(R.id.position, position);
+        ViewHolderForRecyclerView temp = (ViewHolderForRecyclerView) holder;
+        if (temp.getDataSource() != dataSource) {
+            temp.setDataSource(dataSource);
+        }
         boolean result = showLoadMore();
-//        if (loadMore && dataSource.size() == position && holder instanceof LoadMoreViewHolder) {
         if (result && dataSource.size() == position && holder instanceof LoadMoreViewHolder) {
 //            Logger.log("onbindview loadmore");
             LoadMoreViewHolder loadMore = (LoadMoreViewHolder) holder;
@@ -383,7 +388,11 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     protected void onBindView(ViewHolderForRecyclerView holder, MultiTypeItem item, int position, int layoutId) {
     }
 
+    @CallSuper
     protected void onRefreshLocal(ViewHolderForRecyclerView holder, @NonNull List<Object> payloads, int position, int layoutId) {
+        if (holder.getDataSource() != dataSource) {
+            holder.setDataSource(dataSource);
+        }
     }
 
     /**
@@ -440,18 +449,22 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             if (view == null) {
                 return false;
             }
-            RecyclerView.ViewHolder viewHolder = recyclerView.getChildViewHolder(view);
+            final RecyclerView.ViewHolder viewHolder = recyclerView.getChildViewHolder(view);
             if (!(viewHolder instanceof ViewHolderForRecyclerView)) {
                 return false;
             }
-            int position = getAdjustPosition(viewHolder);
-            if (position == RecyclerView.NO_POSITION) {
+            final int position = getAdjustPosition(viewHolder);
+            if (position == invalidPosition()) {
                 return false;
             }
             boolean result = state == State.HIDE;
-//            if (!loadMore || position < dataSource.size()) {
             if (result || position < dataSource.size()) {
-                onItemClick((ViewHolderForRecyclerView) viewHolder, position, dataSource.get(position));
+                dataSource.getInternal(position, new DataSource.ItemCallback() {
+                    @Override
+                    public void callback(MultiTypeItem item) {
+                        onItemClick((ViewHolderForRecyclerView) viewHolder, position, item);
+                    }
+                });
             }
             return true;
         }
@@ -519,7 +532,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             return;
         }
         int pos = getAdjustPosition(holder);
-        if (pos == RecyclerView.NO_POSITION) {
+        if (pos == invalidPosition()) {
             return;
         }
         int size = nestedRecyclerViews.size();
@@ -647,11 +660,12 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         public void onItemRangeChanged(int positionStart, int itemCount) {
+            int pos = positionStart - offset();
             Logger.log("onItemRangeChanged positionStart==" + positionStart + " itemCount==" + itemCount);
             if (states == null || states.size() == 0) {
                 return;
             }
-            for (int i = positionStart; i < positionStart + itemCount; i++) {
+            for (int i = pos; i < pos + itemCount; i++) {
                 states.remove(i);
             }
         }
@@ -661,12 +675,13 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         public void onItemRangeInserted(int positionStart, int itemCount) {
+            int pos = positionStart - offset();
             Logger.log("onItemRangeInserted positionStart==" + positionStart + " itemCount==" + itemCount);
             if (states == null || states.size() == 0) {
                 return;
             }
             List<Integer> positions = new ArrayList<>();
-            Integer start = positionStart;
+            Integer start = pos;
             for (Integer integer : states.keySet()) {
                 if (integer >= start) {
                     positions.add(integer);
@@ -688,17 +703,18 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         public void onItemRangeRemoved(int positionStart, int itemCount) {
+            int pos = positionStart - offset();
             if (removeByAdapter) {
-                removeData(positionStart, itemCount);
+                removeData(pos, itemCount);
                 removeByAdapter = false;
             }
-            Logger.log("onItemRangeRemoved positionStart==" + positionStart + " itemCount==" + itemCount);
+            Logger.log("onItemRangeRemoved pos==" + pos + " itemCount==" + itemCount);
             if (states == null || states.size() == 0) {
                 return;
             }
             List<Integer> positions = new ArrayList<>();
             List<Integer> removes = new ArrayList<>(itemCount);
-            Integer start = positionStart;
+            Integer start = pos;
             for (Integer integer : states.keySet()) {
                 if (integer >= start + itemCount) {
                     positions.add(integer);
@@ -843,9 +859,20 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             return;
         }
         int childCount = recyclerView.getChildCount();
-        View last = recyclerView.getChildAt(childCount - 1);
-        if (last != null) {
-            RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(last);
+
+        int lastIndex = childCount - 1;
+        View child = recyclerView.getChildAt(lastIndex);
+        while (child != null) {
+            RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(child);
+            if (holder instanceof ViewHolderForRecyclerView) {
+                break;
+            }
+            child = recyclerView.getChildAt(--lastIndex);
+        }
+
+//        View last = recyclerView.getChildAt(childCount - 1);
+        if (child != null) {
+            RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(child);
             if (holder == null || !(holder instanceof ViewHolderForRecyclerView)) {
                 return;
             }
@@ -872,6 +899,10 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 }
             }
         }
+    }
+
+    private int invalidPosition() {
+        return RecyclerView.NO_POSITION - offset();
     }
 
     private boolean showLoadMore() {

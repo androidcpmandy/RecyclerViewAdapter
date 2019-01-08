@@ -8,12 +8,17 @@ import android.util.SparseArray;
 import android.view.View;
 import android.widget.TextView;
 
+import com.mandy.recyclerview.adapter.DataSource;
+import com.mandy.recyclerview.bean.MultiTypeItem;
+import com.mandy.recyclerview.interfaces.ForbidClickListener;
+import com.mandy.recyclerview.log.Logger;
+
 /**
  * Created on 2017/7/4.
  */
 public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
     private View rootView;
-    //    private RecyclerView recyclerView;
+    private DataSource dataSource;
     private SparseArrayCompat<RecyclerView> nestedRecyclerViews;//rootView上的rv
     private SparseArray<View> views;
     private int offset;
@@ -23,6 +28,15 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
         this.rootView = rootView;
         views = new SparseArray<>();
         this.offset = offset;
+    }
+
+    public void setDataSource(DataSource ds) {
+        Logger.log("setDataSource");
+        dataSource = ds;
+    }
+
+    public DataSource getDataSource() {
+        return dataSource;
     }
 
     public ViewHolderForRecyclerView(View rootView) {
@@ -93,13 +107,21 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
      * 在initComponent中通过调用setViewClickListener来设置点击事件
      */
     public void setViewClickListener(@IdRes int resId, @NonNull final OnClickListener listener) {
+        Logger.log("setViewClickListener");
         View view = getView(resId);
-        view.setOnClickListener(new View.OnClickListener() {
+        view.setOnClickListener(new ForbidClickListener() {
             @Override
-            public void onClick(View view) {
-                int position = getAdapterPosition() - offset;
+            public void onClick(final View view) {
+                int position = getAdapterPosition();
+                final int offsetPos = position - offset;
                 if (position != RecyclerView.NO_POSITION) {
-                    listener.onClick(view, position);
+
+                    dataSource.getInternal(offsetPos, new DataSource.ItemCallback() {
+                        @Override
+                        public void callback(MultiTypeItem item) {
+                            listener.onClick(view, item, offsetPos);
+                        }
+                    });
                 }
 
 
@@ -114,7 +136,7 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
     }
 
     public interface OnClickListener {
-        void onClick(View view, int position);
+        void onClick(View view, MultiTypeItem item, int position);
     }
 
     /**

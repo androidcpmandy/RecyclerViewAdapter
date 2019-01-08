@@ -9,12 +9,10 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.mandy.recyclerview.adapter.DataSource;
 import com.mandy.recyclerview.adapter.MultiTypeAdapter;
 import com.mandy.recyclerview.bean.MultiTypeItem;
-import com.mandy.recyclerview.interfaces.State;
 import com.mandy.recyclerview.itemanimator.CustomDefaultItemAnimator;
 import com.mandy.recyclerview.log.Logger;
 import com.mandy.recyclerview.viewholder.ViewHolderForRecyclerView;
@@ -66,7 +64,7 @@ public class MainActivity extends Activity {
 
 //        /*
 //        data = new DataSource(new ArrayList<MultiTypeItem>());
-        data = new DataSource.AdapterConfig().state(State.LOAD_MORE).loadingAlways(false).saveSate(true).applyConfig();
+        data = new DataSource.AdapterConfig().state(false).loadingAlways(true).saveSate(true).applyConfig();
         data.add(new MultiTypeItem(R.layout.testlayout, "old1"));
 //        data.add(new MultiTypeItem(R.layout.testlayout1, "old2"));
 //        data.add(new MultiTypeItem(R.layout.testlayout, "old3"));
@@ -117,24 +115,25 @@ public class MainActivity extends Activity {
 
         /************************/
 
-//        rv.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
+        rv.postDelayed(new Runnable() {
+            @Override
+            public void run() {
 //                TextView tv = rv.getChildAt(0).findViewById(R.id.tv);
 //                tv.setText("longlonglonglonglonglonglonglong");
-//            }
-//        }, 3000);
+//                data.update(0,new MultiTypeItem(R.layout.testlayout,"new one!!"));
+            }
+        }, 3000);
 
 
         /************************/
 
 //        rv.setHasFixedSize(true);
         final LinearLayoutManager linearLayoutManager;
-        rv.setLayoutManager(linearLayoutManager = new LinearLayoutManager(this){
+        rv.setLayoutManager(linearLayoutManager = new LinearLayoutManager(this) {
             @Override
             public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+                Log.e("mandy", "onLayoutChildren");
                 super.onLayoutChildren(recycler, state);
-                Log.e("mandy","onLayoutChildren");
             }
         });
         rv.setAdapter(adapter = new MultiTypeAdapter(data) {
@@ -163,15 +162,16 @@ public class MainActivity extends Activity {
                 if (layoutId == R.layout.testlayout) {
                     holder.setViewClickListener(R.id.tv, new ViewHolderForRecyclerView.OnClickListener() {
                         @Override
-                        public void onClick(View view, int position) {
-                            MultiTypeItem multiTypeItem = data.get(position);
-                            Logger.log("mandy", "testlayout click==" + position);
+                        public void onClick(View view, MultiTypeItem item, int position) {
+//                            MultiTypeItem multiTypeItem = data.get(position);
+                            Logger.log("mandy", "testlayout click==" + position + " view==" +
+                                    view + " item==" + item);
                         }
                     });
                 } else if (layoutId == R.layout.testlayout1) {
                     holder.setViewClickListener(R.id.tv, new ViewHolderForRecyclerView.OnClickListener() {
                         @Override
-                        public void onClick(View view, int position) {
+                        public void onClick(View view, MultiTypeItem item, int position) {
                             MultiTypeItem multiTypeItem = data.get(position);
                             Logger.log("mandy", "testlayout1 click position==" + position);
                         }
@@ -193,7 +193,7 @@ public class MainActivity extends Activity {
                         protected void initComponent(ViewHolderForRecyclerView holder, @NonNull ViewGroup parent, int layoutId) {
                             holder.setViewClickListener(R.id.tv, new ViewHolderForRecyclerView.OnClickListener() {
                                 @Override
-                                public void onClick(View view, int position) {
+                                public void onClick(View view, MultiTypeItem item, int position) {
                                     Logger.log("inner adapter click position==" + position);
                                 }
                             });
@@ -269,6 +269,7 @@ public class MainActivity extends Activity {
 
             @Override
             protected void onRefreshLocal(ViewHolderForRecyclerView holder, @NonNull List<Object> payloads, int position, int layoutId) {
+                super.onRefreshLocal(holder, payloads, position, layoutId);
 //                Log.e("mandy", "onRefreshLocal pos==" + position + " payloads==" + payloads.size());
                 if (layoutId == R.layout.testlayout) {
                     String text = (String) payloads.get(0);
@@ -316,10 +317,16 @@ public class MainActivity extends Activity {
 
 //        data.transformLoadMoreState(State.LOAD_MORE);
 //        data.clear();
-
+//        adapter.notifyDataSetChanged();
 //        super.onBackPressed();
-        TextView tv = rv.getChildAt(0).findViewById(R.id.tv);
-        tv.setText("hello" + index++);
+//        data.update(1,new MultiTypeItem(R.layout.testlayout,"new one"));
+
+        data.add(new MultiTypeItem(R.layout.testlayout,"new one"));
+
+//        List<MultiTypeItem> list = new ArrayList<>();
+//        list.add(new MultiTypeItem(R.layout.testlayout, "add one"));
+//        list.add(new MultiTypeItem(R.layout.testlayout, "add two"));
+//        data.addAll(list,true);
 
 
         /*************************清除重置*****************************/
@@ -341,7 +348,7 @@ public class MainActivity extends Activity {
 //        data.endTransaction(new DataSource.Callback() {
 //            @Override
 //            public void callback() {
-//                data.clearAndReset(list, true);
+//        data.clearAndReset(list, false);
 //            }
 //        });
 
@@ -450,7 +457,7 @@ public class MainActivity extends Activity {
 //                    adapter.transformLoadMoreState(State.LOAD_MORE);
                     List<MultiTypeItem> list = new ArrayList<>();
                     if (!inner) {
-//                        list.add(new MultiTypeItem(R.layout.testlayout, "new one"));
+                        list.add(new MultiTypeItem(R.layout.testlayout, "new one"));
 //                        list.add(new MultiTypeItem(R.layout.testlayout, "new two"));
                     } else {
                         if (index == 1) {
@@ -486,7 +493,7 @@ public class MainActivity extends Activity {
     private DataSource generateDs(boolean canLoad, boolean reset) {
 //        List<MultiTypeItem> list = new ArrayList<>();
 //        DataSource ds = new DataSource(list);
-        DataSource ds = new DataSource.AdapterConfig().state(State.LOAD_MORE).loadingAlways(true).applyConfig();
+        DataSource ds = new DataSource.AdapterConfig().state(true).loadingAlways(true).applyConfig();
         ds.enableLoadMore(canLoad);
         ds.add(new MultiTypeItem(R.layout.subitem, reset ? "new1" : "test1"));
         ds.add(new MultiTypeItem(R.layout.subitem, reset ? "new1" : "test2"));

@@ -26,18 +26,20 @@ public class DataSource {
 
     private List<Task> pendingTasks;
     private boolean operationDisallow;
+    private int offset;
 
     private DataSource(List<MultiTypeItem> data) {
         this.data = data;
     }
 
-    void setAdapter(MultiTypeAdapter adapter) {
+    void setAdapter(MultiTypeAdapter adapter, int offset) {
         this.adapter = adapter;
+        this.offset = offset;
     }
 
     public void subscribeOn(@NonNull MultiTypeAdapter adapter) {
         adapter.setDataSource(this);
-        setAdapter(adapter);
+        setAdapter(adapter, adapter.offset());
         if (config == null) {
             config = new AdapterConfig();
         }
@@ -81,7 +83,7 @@ public class DataSource {
             public void run() {
                 data.add(position, item);
                 if (adapter != null) {
-                    adapter.notifyItemInserted(position);
+                    adapter.notifyItemInserted(position + offset);
                 }
             }
         };
@@ -93,10 +95,10 @@ public class DataSource {
         Runnable r = new Runnable() {
             @Override
             public void run() {
+                int index = data.size();
                 data.add(item);
                 if (adapter != null) {
-                    int index = data.size();
-                    adapter.notifyItemInserted(index);
+                    adapter.notifyItemInserted(index + offset);
                 }
             }
         };
@@ -152,34 +154,41 @@ public class DataSource {
             return;
         }
         if (list == null) {
-            if (fromLoadMore) {
+            if (loadMoreCheck(fromLoadMore)) {
                 transformLoadMoreState(State.ERROR);
             }
             return;
         }
         if (list.isEmpty()) {
-            if (fromLoadMore) {//没有更多数据
+            if (loadMoreCheck(fromLoadMore)) {//没有更多数据
                 transformLoadMoreState(State.NO_MORE);
             }
             return;
         }
-        if (fromLoadMore) {
+        if (loadMoreCheck(fromLoadMore)) {
             if (adapter != null) {
                 transformLoadMoreState(State.LOAD_MORE);
                 adapter.notifyItemDataFromLoad(list);
             }
-        } else if (position == INVALID) {
+        } else if (!fromLoadMore && position == INVALID) {
             int index = data.size();
             data.addAll(list);
             if (adapter != null) {
-                adapter.notifyItemRangeInserted(index, list.size());
+                adapter.notifyItemRangeInserted(index + offset, list.size());
             }
-        } else {
+        } else if (!fromLoadMore) {
             data.addAll(position, list);
             if (adapter != null) {
-                adapter.notifyItemRangeInserted(position, list.size());
+                adapter.notifyItemRangeInserted(position + offset, list.size());
             }
         }
+    }
+
+    private boolean loadMoreCheck(boolean loadMore) {
+        if (config == null) {
+            config = new AdapterConfig();
+        }
+        return loadMore && (config.state == State.LOAD_MORE || config.state == State.RELOAD);
     }
 
     public void remove(final int position) {
@@ -190,7 +199,7 @@ public class DataSource {
                 if (adapter == null) {
                     data.remove(position);
                 } else {
-                    adapter.notifyItemRangeRemoved(position, 1, true);
+                    adapter.notifyItemRangeRemoved(position + offset, 1, true);
                 }
             }
         };
@@ -222,7 +231,7 @@ public class DataSource {
             public void run() {
                 data.set(position, item);
                 if (adapter != null) {
-                    adapter.notifyItemChanged(position);
+                    adapter.notifyItemChanged(position + offset);
                 }
             }
         };
@@ -268,7 +277,7 @@ public class DataSource {
         if (adapter == null) {
             removeData(position, itemCount);
         } else {
-            adapter.notifyItemRangeRemoved(position, itemCount, true);
+            adapter.notifyItemRangeRemoved(position + offset, itemCount, true);
         }
     }
 
@@ -319,6 +328,29 @@ public class DataSource {
     public MultiTypeItem get(int position) {
         checkOperationValid();
         return data.get(position);
+    }
+
+    /**
+     * 内部使用，无视该方法
+     */
+    public void getInternal(final int position, final ItemCallback callback) {
+        if (operationDisallow) {
+            adapter.recyclerView.postOnAnimation(new Runnable() {
+                @Override
+                public void run() {
+                    callback.callback(get(position));
+                }
+            });
+        } else {
+            callback.callback(get(position));
+        }
+    }
+
+    /**
+     * 内部使用，忽略
+     */
+    public interface ItemCallback {
+        void callback(MultiTypeItem item);
     }
 
     /**
@@ -412,7 +444,6 @@ public class DataSource {
     private int flag;
     private final int UPDATE = 0x01;
     private final int OTHER = 0x10;
-    private final int MASK = 0x11;
     private boolean transaction;
     private final static int INVALID = -1;
 
@@ -538,8 +569,8 @@ public class DataSource {
             return this;
         }
 
-        public AdapterConfig state(@State int state) {
-            this.state = state;
+        public AdapterConfig state(boolean loadMore) {
+            this.state = loadMore ? State.LOAD_MORE : State.HIDE;
             return this;
         }
 
