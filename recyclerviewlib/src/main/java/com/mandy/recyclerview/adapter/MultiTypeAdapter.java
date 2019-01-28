@@ -113,7 +113,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             dataSource.applyConfig();
         }
         this.recyclerView = recyclerView;
-        recyclerView.setHasFixedSize(true);
+        setHasFixedSize(recyclerView);
         recyclerView.addOnItemTouchListener(this);
         if (withoutAnimation) {
             recyclerView.setItemAnimator(null);
@@ -134,6 +134,12 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             }
         });
         Logger.setDebuggable(debuggable && isApkInDebug(recyclerView.getContext()));
+    }
+
+    private void setHasFixedSize(RecyclerView recyclerView) {
+        ViewGroup.LayoutParams layoutParams = recyclerView.getLayoutParams();
+        boolean result = layoutParams.height == ViewGroup.LayoutParams.WRAP_CONTENT || layoutParams.width == ViewGroup.LayoutParams.WRAP_CONTENT;
+        recyclerView.setHasFixedSize(!result);
     }
 
     @Override

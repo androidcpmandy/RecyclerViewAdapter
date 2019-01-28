@@ -321,7 +321,7 @@ public class MainActivity extends Activity {
 //        super.onBackPressed();
 //        data.update(1,new MultiTypeItem(R.layout.testlayout,"new one"));
 
-        data.add(new MultiTypeItem(R.layout.testlayout,"new one"));
+        data.add(new MultiTypeItem(R.layout.testlayout, "new one"));
 
 //        List<MultiTypeItem> list = new ArrayList<>();
 //        list.add(new MultiTypeItem(R.layout.testlayout, "add one"));
