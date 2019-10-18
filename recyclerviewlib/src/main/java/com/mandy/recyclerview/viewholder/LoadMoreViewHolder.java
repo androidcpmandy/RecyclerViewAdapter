@@ -3,6 +3,7 @@ package com.mandy.recyclerview.viewholder;
 import android.view.View;
 
 import com.mandy.recyclerview.interfaces.State;
+import com.mandy.recyclerview.log.Logger;
 import com.mandy.recyclerview.view.AbstractLoadMoreView;
 
 /**
@@ -22,15 +23,19 @@ public class LoadMoreViewHolder extends ViewHolderForRecyclerView {
         switch (state) {
             case State.NO_MORE:
                 loadMoreView.noMore();
+                Logger.log("loadMore state==没有更多");
                 break;
             case State.LOAD_MORE:
                 loadMoreView.loading();
+                Logger.log("loadMore state==正在加载");
                 break;
             case State.ERROR:
                 loadMoreView.error();
+                Logger.log("loadMore state==加载错误");
                 break;
             case State.RELOAD:
                 loadMoreView.reload();
+                Logger.log("loadMore state==重新加载");
         }
     }
 

@@ -3,6 +3,7 @@ package com.mandy.recyclerview.view;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -37,6 +38,8 @@ public abstract class AbstractLoadMoreView extends FrameLayout {
         setLayoutParams(lp);
     }
 
+    public abstract void onCreateView(ViewGroup rootView);
+
     /**
      * 正在加载的动画
      */
@@ -46,8 +49,6 @@ public abstract class AbstractLoadMoreView extends FrameLayout {
      * 结束动画
      */
     public abstract void stopLoading();
-
-    public abstract void onCreateView(ViewGroup rootView);
 
     /**
      * 没有更多数据可以加载，在这里设置对应控件状态
@@ -68,4 +69,16 @@ public abstract class AbstractLoadMoreView extends FrameLayout {
      * 网络异常重新加载，在这里设置对应控件状态
      */
     public abstract void reload();
+
+    @Override
+    protected void onAttachedToWindow() {
+        Log.e("mandy","load more view onAttachedToWindow");
+        super.onAttachedToWindow();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        Log.e("mandy","load more view onDetachedFromWindow");
+        super.onDetachedFromWindow();
+    }
 }

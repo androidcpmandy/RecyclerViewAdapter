@@ -3,6 +3,7 @@ package com.mandy.recyclerview.adapter;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RestrictTo;
 import android.support.v7.widget.RecyclerView;
 
 import com.mandy.recyclerview.bean.MultiTypeItem;
@@ -19,10 +20,13 @@ import java.util.List;
  */
 public class DataSource {
 
-    public final static List<MultiTypeItem> EMPTY = Collections.unmodifiableList(new ArrayList<MultiTypeItem>(1));
+    public final static List<MultiTypeItem> ERROR = null;
+    @SuppressWarnings("unchecked")
+    public final static List<MultiTypeItem> NO_MORE = Collections.EMPTY_LIST;
+
     private List<MultiTypeItem> data;
     private MultiTypeAdapter adapter;
-    private AdapterConfig config;
+    private Configuration config;
 
     private List<Task> pendingTasks;
     private boolean operationDisallow;
@@ -41,7 +45,7 @@ public class DataSource {
         adapter.setDataSource(this);
         setAdapter(adapter, adapter.offset());
         if (config == null) {
-            config = new AdapterConfig();
+            config = new Configuration();
         }
         applyConfig();
     }
@@ -90,6 +94,9 @@ public class DataSource {
         runOrPend(OTHER, r);
     }
 
+    /**
+     * 填充dataSource数据时调用，涉及到加载更多时调用loadMore方法
+     */
     public void add(@NonNull final MultiTypeItem item) {
         checkOperationValid();
         Runnable r = new Runnable() {
@@ -105,22 +112,40 @@ public class DataSource {
         runOrPend(OTHER, r);
     }
 
+//    /**
+//     * @param list         需要加载更多的数据，可以传入一个常量EMPTY表示没有更多数据可以加载
+//     *                     传入null表示数据异常
+//     * @param fromLoadMore 如果是加载更多获取到的数据，一定要设置为true，其他情况为false
+//     */
+//    public void addAll(@Nullable final List<MultiTypeItem> list, final boolean fromLoadMore) {
+//        checkOperationValid();
+//        Runnable r = new Runnable() {
+//            @Override
+//            public void run() {
+//                addAllInternal(INVALID, list, fromLoadMore);
+//            }
+//        };
+//        runOrPend(OTHER, r);
+//    }
+
     /**
-     * @param list         需要加载更多的数据，可以传入一个常量EMPTY表示没有更多数据可以加载
-     *                     传入null表示数据异常
-     * @param fromLoadMore 如果是加载更多获取到的数据，一定要设置为true，其他情况为false
+     * @param list 需要加载更多的数据，可以传入一个常量EMPTY表示没有更多数据可以加载
+     *             传入null表示数据异常
      */
-    public void addAll(@Nullable final List<MultiTypeItem> list, final boolean fromLoadMore) {
+    public void loadMore(@Nullable final List<MultiTypeItem> list) {
         checkOperationValid();
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                addAllInternal(INVALID, list, fromLoadMore);
+                addAllInternal(INVALID, list, true);
             }
         };
         runOrPend(OTHER, r);
     }
 
+    /**
+     * 普通添加item方法，如果是加载更多使用loadMore
+     */
     public void addAll(@NonNull final List<MultiTypeItem> list) {
         checkOperationValid();
         Runnable r = new Runnable() {
@@ -186,7 +211,7 @@ public class DataSource {
 
     private boolean loadMoreCheck(boolean loadMore) {
         if (config == null) {
-            config = new AdapterConfig();
+            config = new Configuration();
         }
         return loadMore && (config.state == State.LOAD_MORE || config.state == State.RELOAD);
     }
@@ -333,6 +358,7 @@ public class DataSource {
     /**
      * 内部使用，无视该方法
      */
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
     public void getInternal(final int position, final ItemCallback callback) {
         if (operationDisallow) {
             adapter.recyclerView.postOnAnimation(new Runnable() {
@@ -349,6 +375,7 @@ public class DataSource {
     /**
      * 内部使用，忽略
      */
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
     public interface ItemCallback {
         void callback(MultiTypeItem item);
     }
@@ -394,19 +421,21 @@ public class DataSource {
      * @param loadingAlways 默认值为true，控制loadMore布局移出屏幕是否调用abortLoadMore
      */
     private void configRecyclerViewBehavior(boolean withoutAnimation, boolean saveSate,
-                                            @State int state, boolean loadingAlways) {
+                                            @State int state, boolean loadingAlways, boolean debuggable) {
         if (config == null) {
-            config = new AdapterConfig();
+            config = new Configuration();
         }
         config.withoutAnimation = withoutAnimation;
         config.saveSate = saveSate;
         config.state = state;
         config.loadingAlways = loadingAlways;
+        config.debuggable = debuggable;
     }
 
     void applyConfig() {
         if (adapter != null) {
-            adapter.configRecyclerViewBehavior(config.withoutAnimation, config.saveSate, config.state, config.loadingAlways);
+            adapter.configRecyclerViewBehavior(config.withoutAnimation, config.saveSate,
+                    config.state, config.loadingAlways, config.debuggable);
         }
     }
 
@@ -416,7 +445,7 @@ public class DataSource {
 
     private void transformLoadMoreState(@State final int loadMoreState) {
         if (config == null) {
-            config = new AdapterConfig();
+            config = new Configuration();
         }
         config.state = loadMoreState;
         if (adapter != null) {
@@ -426,14 +455,14 @@ public class DataSource {
 
     void updateState(@State int loadMoreState) {
         if (config == null) {
-            config = new AdapterConfig();
+            config = new Configuration();
         }
         config.state = loadMoreState;
     }
 
     void abort(boolean abortData) {
         if (config == null) {
-            config = new AdapterConfig();
+            config = new Configuration();
         }
         config.abortData = abortData;
     }
@@ -551,37 +580,43 @@ public class DataSource {
 
     /*******************************************************/
 
-    public static class AdapterConfig {
+    public static class Configuration {
         boolean withoutAnimation;
-        boolean saveSate;
+        boolean debuggable;//打印日志，开启后可能会影响到滑动流畅
+        boolean saveSate;//item中嵌套rv开启后可以保存rv滑动位置，否则设置为false即可
         int state = State.HIDE;
         boolean loadingAlways = true;//控制loadMore布局移出屏幕是否调用abortLoadMore
 
         boolean abortData;
 
-        public AdapterConfig withoutAnimation(boolean withoutAnimation) {
+        public Configuration withoutAnimation(boolean withoutAnimation) {
             this.withoutAnimation = withoutAnimation;
             return this;
         }
 
-        public AdapterConfig saveSate(boolean saveSate) {
+        public Configuration debug(boolean debuggable) {
+            this.debuggable = debuggable;
+            return this;
+        }
+
+        public Configuration saveSate(boolean saveSate) {
             this.saveSate = saveSate;
             return this;
         }
 
-        public AdapterConfig state(boolean loadMore) {
+        public Configuration state(boolean loadMore) {
             this.state = loadMore ? State.LOAD_MORE : State.HIDE;
             return this;
         }
 
-        public AdapterConfig loadingAlways(boolean loadingAlways) {
+        public Configuration loadingAlways(boolean loadingAlways) {
             this.loadingAlways = loadingAlways;
             return this;
         }
 
         public DataSource applyConfig() {
             DataSource ds = new DataSource(new ArrayList<MultiTypeItem>());
-            ds.configRecyclerViewBehavior(withoutAnimation, saveSate, state, loadingAlways);
+            ds.configRecyclerViewBehavior(withoutAnimation, saveSate, state, loadingAlways, debuggable);
             return ds;
         }
     }

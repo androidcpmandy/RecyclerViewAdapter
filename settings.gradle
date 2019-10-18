@@ -1,2 +1,4 @@
-include ':app', ':recyclerviewlib'
+include ':app', ':recyclerviewlib', ':aligntextview', ':demo', ':samples'
+
+project(':aligntextview').projectDir = new File("D:\\uiViews\\androidstudy\\uilib")
 

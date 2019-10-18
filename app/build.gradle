@@ -35,7 +35,9 @@ dependencies {
     implementation project(':recyclerviewlib')
 
 //    implementation 'com.mandy:uiviews:1.1'
-    implementation project(':aligntextview')
+//    implementation project(':aligntextview')
+
+//    implementation 'com.mandy:rvUtils:1.0.1'
 
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
     releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.4'

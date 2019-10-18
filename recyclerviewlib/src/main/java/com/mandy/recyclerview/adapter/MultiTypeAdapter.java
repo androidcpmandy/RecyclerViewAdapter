@@ -28,6 +28,7 @@ import com.mandy.recyclerview.interfaces.State;
 import com.mandy.recyclerview.itemanimator.CustomDefaultItemAnimator;
 import com.mandy.recyclerview.layoutmanager.SmoothScroller;
 import com.mandy.recyclerview.log.Logger;
+import com.mandy.recyclerview.view.AbstractLoadMoreView;
 import com.mandy.recyclerview.view.DefaultLoadMoreView;
 import com.mandy.recyclerview.view.StubView;
 import com.mandy.recyclerview.viewholder.LoadMoreViewHolder;
@@ -45,7 +46,7 @@ import java.util.Map;
  */
 public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements RecyclerView.OnItemTouchListener {
 
-    private boolean debuggable = true;
+    private boolean debuggable;
     //    public final static int SIMPLE_ANIMATION = R.id.simpleAnimation;
     public final static int LOAD_MORE_TYPE = 11100819;
     private DataSource dataSource;
@@ -68,6 +69,17 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private boolean loadingAlways;
     private boolean loadSuccess;
 
+    /**
+     * 在加载更多item执行动画的时候禁止rv可以滑动，
+     * 可能存在一种情况，在加载更多item还未到达底部
+     * 此时再次快速滑到底部，最终会导致加载更多item
+     * 动画到底部后不会触发onViewDetachedFromWindow.
+     * <p>
+     * 基于上述原因在加载更多动画执行时禁止rv可以滑动
+     */
+    private boolean intercept;
+    private boolean loadMoreAttach;
+
     public MultiTypeAdapter() {
     }
 
@@ -84,7 +96,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     @Override
-    public int getItemViewType(int position) {
+    public final int getItemViewType(int position) {
         int count = dataSource.size();
         if (position == count && showLoadMore()) {
             return LOAD_MORE_TYPE;
@@ -105,7 +117,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
-//        Logger.log("onAttachedToRecyclerView");
+        Logger.log("onAttachedToRecyclerView");
         super.onAttachedToRecyclerView(recyclerView);
         registerAdapterDataObserver(observer);
         if (dataSource != null) {
@@ -144,7 +156,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
-//        Logger.log("onDetachedFromRecyclerView");
+        Logger.log("onDetachedFromRecyclerView");
         super.onDetachedFromRecyclerView(recyclerView);
         unregisterAdapterDataObserver(observer);
         recyclerView.removeOnItemTouchListener(this);
@@ -152,7 +164,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int layoutId) {
+    public final RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int layoutId) {
         if (layoutId == INVALID) {
             throw new IllegalArgumentException("layoutId should not be INVALID");
         }
@@ -307,8 +319,12 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     }
 
+    /**
+     * 开启预加载的情况下，在滑到最后一个item(非加载更多)的时候就会提前调用
+     * onBindViewHolder加载"加载更多"
+     */
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    public final void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (position == invalidPosition() || !(holder instanceof ViewHolderForRecyclerView)) {
             return;
         }
@@ -318,9 +334,9 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
         boolean result = showLoadMore();
         if (result && dataSource.size() == position && holder instanceof LoadMoreViewHolder) {
-//            Logger.log("onbindview loadmore");
-            LoadMoreViewHolder loadMore = (LoadMoreViewHolder) holder;
-            loadMore.stateChange(state);
+//            Logger.log("onBindView loadMore view");
+//            LoadMoreViewHolder loadMore = (LoadMoreViewHolder) holder;
+//            loadMore.stateChange(state);
             return;
         }
         onBindView((ViewHolderForRecyclerView) holder, dataSource.get(position), position, getItemViewType(position));
@@ -339,7 +355,8 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     /**
      * 初始化操作，常见于item中嵌套rv，viewpager，不要在onBindView中每次初始化这些rv，viewpager
-     * 而导致重复调用setAdapter等方法，建议将rv，viewpager初始化放到initComponent
+     * 而导致重复调用setAdapter等方法，建议将rv，viewpager初始化放到initComponent。
+     * 另外需要将设置点击事件放到该方法中实现。
      */
     protected void initComponent(ViewHolderForRecyclerView holder, @NonNull ViewGroup parent, int layoutId) {
     }
@@ -377,7 +394,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     /**
      * 使用自定义的加载更多布局
      */
-    protected View createLoadMoreView(RecyclerView recyclerView) {
+    protected AbstractLoadMoreView createLoadMoreView(RecyclerView recyclerView) {
         return null;
     }
 
@@ -415,6 +432,9 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+        if (intercept) {
+            return true;
+        }
         if (gestureDetectorCompat != null) {
             gestureDetectorCompat.onTouchEvent(e);
         }
@@ -505,7 +525,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onViewDetachedFromWindow(@NonNull RecyclerView.ViewHolder holder) {
-//        Logger.log("onViewDetachedFromWindow pos==" + holder.getAdapterPosition());
+        Logger.log("onViewDetachedFromWindow pos==" + holder.getAdapterPosition());
         super.onViewDetachedFromWindow(holder);
 
         /*
@@ -519,6 +539,10 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         int position = getAdjustPosition(holder);
         if ((position == getItemCount() - 1 || position == -1) && showLoadMore()
                 && holder instanceof LoadMoreViewHolder) {
+
+            loadMoreAttach = false;
+            intercept = false;
+
             if (state == State.ERROR) {
                 transformLoadMoreState(State.RELOAD, false);
             } else if (!loadingAlways && (state == State.LOAD_MORE || state == State.RELOAD)) {
@@ -589,7 +613,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onViewAttachedToWindow(@NonNull RecyclerView.ViewHolder holder) {
-//        Logger.log("onViewAttachedToWindow");
+        Logger.log("onViewAttachedToWindow");
         super.onViewAttachedToWindow(holder);
         if (!(holder instanceof ViewHolderForRecyclerView)) {
             return;
@@ -597,7 +621,8 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         boolean result = state == State.LOAD_MORE || state == State.ERROR || state == State.RELOAD;
         //holder.getAdapterPosition() == datasource.size修改成如下，没问题吧？
         if (result && getAdjustPosition(holder) == getItemCount() - 1 && holder instanceof LoadMoreViewHolder) {
-//            loadMoreAttach = true;
+
+            loadMoreAttach = true;
 
             /*
              * 以下五行是下滑移除loadMore后网络请求仍然能进行的逻辑
@@ -629,14 +654,19 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     private void loadData(LoadMoreViewHolder holder) {
-        if (/*loadMoreAttach && */!loading) {
+        /*
+         * 保证每次加载更多item出现时startLoading都会被调用
+         * 否则加载更多的转圈动画不会被执行，在如下操作下
+         * "加载更多出现-->隐藏-->再出现"
+         * */
+        holder.startLoading();
+
+        if (!loading) {
             if (state == State.RELOAD || state == State.LOAD_MORE) {
                 loading = true;
 
                 loadSuccess = false;
                 dataSource.abort(false);
-                holder.startLoading();
-//                dataSource.setLoadSuccess(loadSuccess);
 
                 final int temp = state;
                 if (loadMoreRunnable == null) {
@@ -803,6 +833,11 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             loadComplete();
             return;
         }
+
+        if (loadMoreAttach) {
+            intercept = true;
+        }
+
         loadSuccess = true;
         dataSource.addAll(list);
         loadComplete();
@@ -817,15 +852,17 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     void configRecyclerViewBehavior(boolean withoutAnimation, boolean saveSate, @State int state,
-                                    boolean loadingAlways) {
+                                    boolean loadingAlways, boolean debuggable) {
         this.withoutAnimation = withoutAnimation;
         this.loadingAlways = loadingAlways;
+        this.debuggable = debuggable;
         if (recyclerView != null) {
             RecyclerView.ItemAnimator itemAnimator = recyclerView.getItemAnimator();
             if (withoutAnimation) {
                 recyclerView.setItemAnimator(null);
             } else if (itemAnimator instanceof DefaultItemAnimator) {
-                recyclerView.setItemAnimator(new CustomDefaultItemAnimator());
+                CustomDefaultItemAnimator animator = new CustomDefaultItemAnimator();
+                recyclerView.setItemAnimator(animator);
             }
         }
         this.saveSate = saveSate;
@@ -834,6 +871,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         this.state = state;
+        Logger.log("初始化state==" + state);
         loadComplete();
     }
 
@@ -866,6 +904,9 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
         int childCount = recyclerView.getChildCount();
 
+        /*
+         * 获取最后一个item的index
+         * */
         int lastIndex = childCount - 1;
         View child = recyclerView.getChildAt(lastIndex);
         while (child != null) {
@@ -876,7 +917,6 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             child = recyclerView.getChildAt(--lastIndex);
         }
 
-//        View last = recyclerView.getChildAt(childCount - 1);
         if (child != null) {
             RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(child);
             if (holder == null || !(holder instanceof ViewHolderForRecyclerView)) {
@@ -886,7 +926,12 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
              * if分支保证加载更多item还在屏幕上
              * */
             if (holder instanceof LoadMoreViewHolder) {
-                onBindViewHolder(holder, getAdjustPosition(holder));
+//                onBindViewHolder(holder, getAdjustPosition(holder));
+                boolean result = showLoadMore();
+                if (result) {
+                    LoadMoreViewHolder loadMore = (LoadMoreViewHolder) holder;
+                    loadMore.stateChange(state);
+                }
             } else {
                 if (oldState != State.HIDE) {
                     notifyItemRangeChanged(getItemCount() - 1, 1);

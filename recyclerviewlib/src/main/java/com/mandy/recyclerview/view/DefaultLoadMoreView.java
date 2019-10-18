@@ -19,7 +19,7 @@ public class DefaultLoadMoreView extends SimpleLoadMoreView {
     @Override
     public void onCreateView(ViewGroup rootView) {
         super.onCreateView(rootView);
-        tv = (TextView) rootView.findViewById(R.id.tv);
+        tv = rootView.findViewById(R.id.tv);
     }
 
     @Override

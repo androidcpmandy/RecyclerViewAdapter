@@ -2,6 +2,7 @@ package com.mandy.recyclerview.viewholder;
 
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.RestrictTo;
 import android.support.v4.util.SparseArrayCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
@@ -79,6 +80,7 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
     /**
      * 内部使用
      */
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
     public void addRecyclerView(int id, RecyclerView rv) {
         if (nestedRecyclerViews == null) {
             nestedRecyclerViews = new SparseArrayCompat<>();
@@ -89,6 +91,7 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
     /**
      * 内部使用
      */
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
     public RecyclerView getNestedRecyclerView(int id) {
         if (nestedRecyclerViews == null) {
             return null;
@@ -99,6 +102,7 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
     /**
      * 内部使用
      */
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
     public SparseArrayCompat<RecyclerView> getNestedRecyclerViews() {
         return nestedRecyclerViews;
     }
@@ -107,7 +111,7 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
      * 在initComponent中通过调用setViewClickListener来设置点击事件
      */
     public void setViewClickListener(@IdRes int resId, @NonNull final OnClickListener listener) {
-        Logger.log("setViewClickListener");
+//        Logger.log("setViewClickListener");
         View view = getView(resId);
         view.setOnClickListener(new ForbidClickListener() {
             @Override
@@ -139,12 +143,6 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
         void onClick(View view, MultiTypeItem item, int position);
     }
 
-    /**
-     * 在Application中调用MultiTypeAdapter的createLoader，否则无法获取到网络图片
-     */
-//    public void setImageBitmapFromNet(Context context, int viewId, String path, int defaultResourceId) {
-//        MultiTypeAdapter.loadImg(getView(viewId), path, ContextCompat.getDrawable(context, defaultResourceId));
-//    }
     public void setImageBitmap(int viewId, int resId) {
         getView(viewId).setBackgroundResource(resId);
     }

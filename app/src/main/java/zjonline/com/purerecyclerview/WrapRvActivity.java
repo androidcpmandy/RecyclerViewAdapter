@@ -21,7 +21,7 @@ public class WrapRvActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wrap_layout);
 
-        dataSource = new DataSource.AdapterConfig().applyConfig();
+        dataSource = new DataSource.Configuration().applyConfig();
         for (int i = 0; i < 3; i++) {
             dataSource.add(new MultiTypeItem(R.layout.testlayout1, "hello" + i));
         }
@@ -35,6 +35,7 @@ public class WrapRvActivity extends AppCompatActivity {
                 holder.setText(R.id.tv, (String) data);
             }
         });
+        recyclerView.setHasFixedSize(true);
     }
 
     @Override

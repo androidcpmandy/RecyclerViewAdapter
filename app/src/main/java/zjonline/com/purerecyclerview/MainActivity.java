@@ -15,6 +15,7 @@ import com.mandy.recyclerview.adapter.MultiTypeAdapter;
 import com.mandy.recyclerview.bean.MultiTypeItem;
 import com.mandy.recyclerview.itemanimator.CustomDefaultItemAnimator;
 import com.mandy.recyclerview.log.Logger;
+import com.mandy.recyclerview.view.AbstractLoadMoreView;
 import com.mandy.recyclerview.viewholder.ViewHolderForRecyclerView;
 
 import java.util.ArrayList;
@@ -64,8 +65,8 @@ public class MainActivity extends Activity {
 
 //        /*
 //        data = new DataSource(new ArrayList<MultiTypeItem>());
-        data = new DataSource.AdapterConfig().state(false).loadingAlways(true).saveSate(true).applyConfig();
-        data.add(new MultiTypeItem(R.layout.testlayout, "old1"));
+        data = new DataSource.Configuration().state(false).loadingAlways(true).saveSate(true).applyConfig();
+//        data.add(new MultiTypeItem(R.layout.testlayout, "old1"));
 //        data.add(new MultiTypeItem(R.layout.testlayout1, "old2"));
 //        data.add(new MultiTypeItem(R.layout.testlayout, "old3"));
 //        data.add(new MultiTypeItem(R.layout.testlayout1, "old4"));
@@ -74,18 +75,16 @@ public class MainActivity extends Activity {
 
 //        data.add(new MultiTypeItem(R.layout.testlayout, "hello7"));
 //        data.add(new MultiTypeItem(R.layout.testlayout2, "test1,test2,test3,test4"));
-//        data.add(new MultiTypeItem(R.layout.testlayout2, generateDs(true, false)));
+        data.add(new MultiTypeItem(R.layout.testlayout2, generateDs(true, false)));
+        data.add(new MultiTypeItem(R.layout.testlayout2, generateDs(true, false)));
+        data.add(new MultiTypeItem(R.layout.testlayout2, generateDs(true, false)));
+        data.add(new MultiTypeItem(R.layout.testlayout2, generateDs(true, false)));
+        data.add(new MultiTypeItem(R.layout.testlayout2, generateDs(true, false)));
+        data.add(new MultiTypeItem(R.layout.testlayout2, generateDs(true, false)));
 //        data.add(new MultiTypeItem(R.layout.testlayout2, "test1,test2,test3,test4"));
         data.add(new MultiTypeItem(R.layout.testlayout, "hello4"));
         data.add(new MultiTypeItem(R.layout.testlayout, "hello4"));
 
-//        data.add(new MultiTypeItem(R.layout.testlayout2, "test1,test2,test3,test4"));
-//        data.add(new MultiTypeItem(R.layout.testlayout2, "test1,test2,test3,test4"));
-//        data.add(new MultiTypeItem(R.layout.testlayout2, "test1,test2,test3,test4"));
-//        data.add(new MultiTypeItem(R.layout.testlayout2, "test1,test2,test3,test4"));
-//        data.add(new MultiTypeItem(R.layout.testlayout2, "test1,test2,test3,test4"));
-//        data.add(new MultiTypeItem(R.layout.testlayout2, "test1,test2,test3,test4"));
-//        data.add(new MultiTypeItem(R.layout.testlayout2, "test1,test2,test3,test4"));
         data.add(new MultiTypeItem(R.layout.testlayout, "hello1"));
 //        data.add(new MultiTypeItem(R.layout.testlayout1, "hello2"));
 //        data.add(new MultiTypeItem(R.layout.testlayout1, "hello3"));
@@ -101,7 +100,7 @@ public class MainActivity extends Activity {
 //        data.add(new MultiTypeItem(R.layout.testlayout, "hello12"));
 //        data.add(new MultiTypeItem(R.layout.testlayout, "hello13"));
 //        data.add(new MultiTypeItem(R.layout.testlayout, "hello14"));
-//        data.add(new MultiTypeItem(R.layout.testlayout2, generateDs(false, false)));
+        data.add(new MultiTypeItem(R.layout.testlayout2, generateDs(false, false)));
         data.add(new MultiTypeItem(R.layout.testlayout, "hello8"));
         data.add(new MultiTypeItem(R.layout.testlayout, "hello9"));
         data.add(new MultiTypeItem(R.layout.testlayout, "hello10"));
@@ -290,9 +289,9 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            protected View createLoadMoreView(RecyclerView recyclerView) {
+            protected AbstractLoadMoreView createLoadMoreView(RecyclerView recyclerView) {
 //                return new SimpleLoadMoreView(MainActivity.this,R.layout.customloadmore);
-                return new TestLoadMoreView(recyclerView, R.layout.customloadmore, adapter);
+                return new TestLoadMoreView(recyclerView, R.layout.customloadmore);
             }
         });
 
@@ -313,15 +312,25 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        data.remove(1);
+
 //        data.set(1,new MultiTypeItem(R.layout.testlayout2,"test1,test2,test3,test4,new one,new two"));
 
 //        data.transformLoadMoreState(State.LOAD_MORE);
 //        data.clear();
 //        adapter.notifyDataSetChanged();
 //        super.onBackPressed();
-//        data.update(1,new MultiTypeItem(R.layout.testlayout,"new one"));
+//        data.update(0,new MultiTypeItem(R.layout.testlayout1,"new one"),false);
 
-        data.add(new MultiTypeItem(R.layout.testlayout, "new one"));
+
+//        rv.getItemAnimator().setChangeDuration(0);
+
+//        data.getOriginData().remove(0);
+//        data.getOriginData().add(0, new MultiTypeItem(R.layout.testlayout1, "new one"));
+//        adapter.notifyItemRangeChanged(0, 1);
+
+
+//        data.add(new MultiTypeItem(R.layout.testlayout, "new one"));
 
 //        List<MultiTypeItem> list = new ArrayList<>();
 //        list.add(new MultiTypeItem(R.layout.testlayout, "add one"));
@@ -468,10 +477,10 @@ public class MainActivity extends Activity {
                             list.add(new MultiTypeItem(R.layout.subitem, "second two"));
                         }
                     }
-                    data.addAll(list, true);
+                    data.loadMore(list);
                 } else if (i == 1) {
                     Logger.log("fail!!");
-                    data.addAll(null, true);
+                    data.loadMore(null);
 //                    adapter.transformLoadMoreState(State.ERROR);
 //                    data.transformLoadMoreState(State.HIDE);
                 }
@@ -493,7 +502,7 @@ public class MainActivity extends Activity {
     private DataSource generateDs(boolean canLoad, boolean reset) {
 //        List<MultiTypeItem> list = new ArrayList<>();
 //        DataSource ds = new DataSource(list);
-        DataSource ds = new DataSource.AdapterConfig().state(true).loadingAlways(true).applyConfig();
+        DataSource ds = new DataSource.Configuration().state(true).loadingAlways(true).applyConfig();
         ds.enableLoadMore(canLoad);
         ds.add(new MultiTypeItem(R.layout.subitem, reset ? "new1" : "test1"));
         ds.add(new MultiTypeItem(R.layout.subitem, reset ? "new1" : "test2"));

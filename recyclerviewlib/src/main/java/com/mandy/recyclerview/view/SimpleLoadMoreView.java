@@ -12,17 +12,17 @@ public class SimpleLoadMoreView extends AbstractLoadMoreView {
     }
 
     @Override
+    public void onCreateView(ViewGroup rootView) {
+
+    }
+
+    @Override
     public void startLoading() {
 
     }
 
     @Override
     public void stopLoading() {
-
-    }
-
-    @Override
-    public void onCreateView(ViewGroup rootView) {
 
     }
 

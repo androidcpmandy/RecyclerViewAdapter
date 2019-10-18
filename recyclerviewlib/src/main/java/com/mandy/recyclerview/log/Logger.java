@@ -1,8 +1,10 @@
 package com.mandy.recyclerview.log;
 
+import android.support.annotation.RestrictTo;
 import android.text.TextUtils;
 import android.util.Log;
 
+@RestrictTo(RestrictTo.Scope.LIBRARY)
 public class Logger {
     private final static int ERROR = 0;
     private final static int WARN = 1;
