@@ -33,6 +33,15 @@
             android:gravity="center"
             android:text="样式3"
             android:textSize="20dp" />
+
+        <TextView
+            android:id="@+id/tv4"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:gravity="center"
+            android:text="样式4"
+            android:textSize="20dp" />
+
     </LinearLayout>
 
 </ScrollView>

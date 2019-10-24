@@ -8,6 +8,7 @@ import android.os.Parcelable;
 import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RestrictTo;
 import android.support.v4.util.SparseArrayCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
@@ -20,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 
 import com.mandy.recyclerview.R;
 import com.mandy.recyclerview.bean.MultiTypeItem;
@@ -70,6 +72,13 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private boolean loadSuccess;
 
     /**
+     * 通过该标志位来判断是否子view已经填充满rv，
+     * 在adapter绑定rv或者调用datasource的clearAndReset
+     * 时将会重新设置isFillUp
+     */
+    private boolean isFillUp = true;//是否子view能够填充满rv
+
+    /**
      * 在加载更多item执行动画的时候禁止rv可以滑动，
      * 可能存在一种情况，在加载更多item还未到达底部
      * 此时再次快速滑到底部，最终会导致加载更多item
@@ -116,7 +125,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     @Override
-    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+    public void onAttachedToRecyclerView(@NonNull final RecyclerView recyclerView) {
         Logger.log("onAttachedToRecyclerView");
         super.onAttachedToRecyclerView(recyclerView);
         registerAdapterDataObserver(observer);
@@ -125,6 +134,8 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             dataSource.applyConfig();
         }
         this.recyclerView = recyclerView;
+        addPreDrawListener();
+
         setHasFixedSize(recyclerView);
         recyclerView.addOnItemTouchListener(this);
         if (withoutAnimation) {
@@ -152,6 +163,46 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         ViewGroup.LayoutParams layoutParams = recyclerView.getLayoutParams();
         boolean result = layoutParams.height == ViewGroup.LayoutParams.WRAP_CONTENT || layoutParams.width == ViewGroup.LayoutParams.WRAP_CONTENT;
         recyclerView.setHasFixedSize(!result);
+    }
+
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    public void addPreDrawListener() {
+        /*
+         * 在state状态位支持"加载更多"布局时才进一步操作
+         * */
+        if (maybeShowLoadMore()) {
+            recyclerView.getViewTreeObserver().addOnPreDrawListener(new InnerPreDrawListener());
+        }
+    }
+
+    /**
+     * 判断子view是否能够填充满rv，依次来决定是否放置"加载更多"布局
+     * <p>
+     * 目前isFillUp只考虑了垂直滚动的情况，后期视情况扩充
+     */
+    private boolean isFillUp() {
+        boolean b = recyclerView.canScrollVertically(1);
+        if (b) {
+            return true;
+        }
+        int childCount = recyclerView.getChildCount();
+        if (childCount == 0) {
+            return false;
+        }
+        View child = recyclerView.getChildAt(childCount - 1);
+        int rvHeight = recyclerView.getHeight();
+        int paddingBottom = recyclerView.getPaddingBottom();
+        int rvBottom = rvHeight - paddingBottom;
+
+        RecyclerView.LayoutManager llm = recyclerView.getLayoutManager();
+        int bottomDecorationHeight = llm.getBottomDecorationHeight(child);
+
+        RecyclerView.LayoutParams layoutParams = (RecyclerView.LayoutParams) child.getLayoutParams();
+        int bottomMargin = layoutParams.bottomMargin;
+        int bottom = child.getBottom();
+        int totalHeight = bottom + bottomMargin + bottomDecorationHeight;
+
+        return rvBottom <= totalHeight;
     }
 
     @Override
@@ -307,7 +358,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+    public final void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
         if (!(holder instanceof ViewHolderForRecyclerView)) {
             return;
         }
@@ -334,9 +385,6 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
         boolean result = showLoadMore();
         if (result && dataSource.size() == position && holder instanceof LoadMoreViewHolder) {
-//            Logger.log("onBindView loadMore view");
-//            LoadMoreViewHolder loadMore = (LoadMoreViewHolder) holder;
-//            loadMore.stateChange(state);
             return;
         }
         onBindView((ViewHolderForRecyclerView) holder, dataSource.get(position), position, getItemViewType(position));
@@ -957,6 +1005,13 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     private boolean showLoadMore() {
+        return maybeShowLoadMore() && isFillUp;
+    }
+
+    /**
+     * 判断状态位理论上是否需要展示"加载更多"布局
+     */
+    private boolean maybeShowLoadMore() {
         return state == State.LOAD_MORE || state == State.NO_MORE
                 || state == State.ERROR || state == State.RELOAD;
     }
@@ -964,6 +1019,25 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     void moveToTop() {
         if (recyclerView != null && getItemCount() > 0) {
             recyclerView.scrollToPosition(0);
+        }
+    }
+
+    private class InnerPreDrawListener implements ViewTreeObserver.OnPreDrawListener {
+        @Override
+        public boolean onPreDraw() {
+            Logger.log("onPreDraw");
+            recyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+            boolean current = isFillUp();
+            boolean change = (isFillUp != current);
+            isFillUp = current;
+            if (change) {
+                Logger.log("调用notifyDataSetChanged");
+                /*
+                 * 触发rv内部重新调用getItemCount方法
+                 * */
+                notifyDataSetChanged();
+            }
+            return !isFillUp;
         }
     }
 }

@@ -411,6 +411,7 @@ public class DataSource {
         transformLoadMoreState(loadMore ? State.LOAD_MORE : State.HIDE);
         if (adapter != null) {
             adapter.moveToTop();
+            adapter.addPreDrawListener();
         }
     }
 

@@ -10,15 +10,15 @@ public class ForbidClickListener implements View.OnClickListener {
     protected void forbidClick(View view) {
     }
 
-    protected void forbidClick(View view, int position) {
-    }
+//    protected void forbidClick(View view, int position) {
+//    }
 
     protected int getInterval() {
         return DEFAULT_INTERVAL;
     }
 
     @Override
-    public void onClick(View view) {
+    public final void onClick(View view) {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastTime < getInterval()) {
             showMsg();

@@ -114,8 +114,9 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
 //        Logger.log("setViewClickListener");
         View view = getView(resId);
         view.setOnClickListener(new ForbidClickListener() {
+
             @Override
-            public void onClick(final View view) {
+            protected void forbidClick(final View view) {
                 int position = getAdapterPosition();
                 final int offsetPos = position - offset;
                 if (position != RecyclerView.NO_POSITION) {
@@ -127,16 +128,8 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
                         }
                     });
                 }
-
-
-//                View rootView = recyclerView.findContainingItemView(view);
-//                if (rootView != null) {
-//                    int pos = (int) rootView.getTag(R.id.position);
-//                    listener.onClick(view, pos);
-//                }
             }
         });
-
     }
 
     public interface OnClickListener {
