@@ -41,7 +41,7 @@ public abstract class AbstractLoadMoreView extends FrameLayout {
     public abstract void onCreateView(ViewGroup rootView);
 
     /**
-     * 正在加载的动画
+     * 在这里做一些加载的动画
      */
     public abstract void startLoading();
 

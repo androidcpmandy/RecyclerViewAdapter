@@ -144,6 +144,20 @@ public class DataSource {
     }
 
     /**
+     * 刷新数据时调用
+     */
+    public void refresh(List<MultiTypeItem> list) {
+        data.clear();
+        if (!(list == null || list.isEmpty())) {
+            data.addAll(list);
+        }
+        if (adapter != null) {
+            adapter.moveToTop();
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    /**
      * 普通添加item方法，如果是加载更多使用loadMore
      */
     public void addAll(@NonNull final List<MultiTypeItem> list) {
@@ -396,24 +410,25 @@ public class DataSource {
         return data;
     }
 
-    /**
-     * 删除原来的所有数据，添加items中数据
-     *
-     * @param loadMore 重置后是否需要加载更多功能
-     */
-    public void clearAndReset(List<MultiTypeItem> items, boolean loadMore) {
-        clear();
-        if (items == null || items.isEmpty()) {
-            loadMore = false;
-        } else {
-            addAll(items);
-        }
-        transformLoadMoreState(loadMore ? State.LOAD_MORE : State.HIDE);
-        if (adapter != null) {
-            adapter.moveToTop();
-            adapter.addPreDrawListener();
-        }
-    }
+//    /**
+//     * 删除原来的所有数据，添加items中数据
+//     *
+//     * @param loadMore 重置后是否需要加载更多功能
+//     */
+//    public void clearAndReset(List<MultiTypeItem> items, boolean loadMore) {
+//        clear();
+//        if (items == null || items.isEmpty()) {
+//            loadMore = false;
+//        } else {
+//            addAll(items);
+//        }
+//        transformLoadMoreState(loadMore ? State.LOAD_MORE : State.HIDE);
+//        if (adapter != null) {
+//            adapter.moveToTop();
+//            adapter.addPreDrawListener();
+//        }
+//    }
+
 
     /**
      * @param saveSate      是否保存嵌套recyclerView的滑动位置

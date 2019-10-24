@@ -8,7 +8,7 @@ publish {
     userOrg = 'mandy'//bintray.com用户名
     groupId = 'com.mandy'//jcenter上的路径
     artifactId = 'rvUtils'//项目名称
-    publishVersion = '2.1.8'//版本号
+    publishVersion = '2.1.11'//版本号
     desc = 'lib的描述信息'//描述，不重要
     website = 'http://www.baidu.com'//网站，最好有，不重要
 }

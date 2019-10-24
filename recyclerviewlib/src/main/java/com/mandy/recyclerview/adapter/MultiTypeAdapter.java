@@ -8,7 +8,6 @@ import android.os.Parcelable;
 import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.RestrictTo;
 import android.support.v4.util.SparseArrayCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
@@ -77,6 +76,12 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
      * 时将会重新设置isFillUp
      */
     private boolean isFillUp = true;//是否子view能够填充满rv
+
+    /**
+     * notifyDataSetChanged触发onChange调用，
+     * 防止无限循环注册onPreDrawListener
+     */
+    private boolean registerListener = true;
 
     /**
      * 在加载更多item执行动画的时候禁止rv可以滑动，
@@ -165,8 +170,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         recyclerView.setHasFixedSize(!result);
     }
 
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    public void addPreDrawListener() {
+    private void addPreDrawListener() {
         /*
          * 在state状态位支持"加载更多"布局时才进一步操作
          * */
@@ -207,7 +211,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
-        Logger.log("onDetachedFromRecyclerView");
+//        Logger.log("onDetachedFromRecyclerView");
         super.onDetachedFromRecyclerView(recyclerView);
         unregisterAdapterDataObserver(observer);
         recyclerView.removeOnItemTouchListener(this);
@@ -449,6 +453,13 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @Override
     public int getItemCount() {
         int count = dataSource != null ? dataSource.size() : 0;
+        /*
+         * 当只有一个或没有数据时，"加载更多"直接不显示
+         * 只有一个数据的情况通常为一个默认空白页面,
+         * */
+        if (count == 1 || count == 0) {
+            return count;
+        }
         boolean result = showLoadMore();
         return result ? count + 1 : count;
     }
@@ -573,7 +584,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onViewDetachedFromWindow(@NonNull RecyclerView.ViewHolder holder) {
-        Logger.log("onViewDetachedFromWindow pos==" + holder.getAdapterPosition());
+//        Logger.log("onViewDetachedFromWindow pos==" + holder.getAdapterPosition());
         super.onViewDetachedFromWindow(holder);
 
         /*
@@ -661,7 +672,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onViewAttachedToWindow(@NonNull RecyclerView.ViewHolder holder) {
-        Logger.log("onViewAttachedToWindow");
+//        Logger.log("onViewAttachedToWindow");
         super.onViewAttachedToWindow(holder);
         if (!(holder instanceof ViewHolderForRecyclerView)) {
             return;
@@ -721,6 +732,21 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                     loadMoreRunnable = new Runnable() {
                         @Override
                         public void run() {
+
+                            /*
+                             * 首次刷新时，超过一屏并且"加载更多"允许显示，
+                             * 再次刷新时，不足一屏情况下，"加载更多"会先
+                             * 布局到屏幕上，然后notifydatachange被调用
+                             * "加载更多"再次被移除屏幕。
+                             * 当"加载更多"被添加到屏幕时会导致loadData被
+                             * 调用，所以需要通过isFillUp禁止loadMoreRunnable
+                             * 内部逻辑被执行
+                             * */
+                            if (!isFillUp) {
+                                return;
+                            }
+
+
                             if (temp == State.RELOAD) {
                                 reload();
                             } else {
@@ -737,6 +763,9 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private class DataObserver extends RecyclerView.AdapterDataObserver {
         public void onChanged() {
             Logger.log("onChanged");
+            if (registerListener) {
+                addPreDrawListener();
+            }
             if (states == null || states.size() == 0) {
                 return;
             }
@@ -759,6 +788,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         public void onItemRangeInserted(int positionStart, int itemCount) {
+            addPreDrawListener();
             int pos = positionStart - offset();
             Logger.log("onItemRangeInserted positionStart==" + positionStart + " itemCount==" + itemCount);
             if (states == null || states.size() == 0) {
@@ -787,6 +817,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         public void onItemRangeRemoved(int positionStart, int itemCount) {
+            addPreDrawListener();
             int pos = positionStart - offset();
             if (removeByAdapter) {
                 removeData(pos, itemCount);
@@ -1032,10 +1063,12 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             isFillUp = current;
             if (change) {
                 Logger.log("调用notifyDataSetChanged");
+                registerListener = false;
                 /*
                  * 触发rv内部重新调用getItemCount方法
                  * */
                 notifyDataSetChanged();
+                registerListener = true;
             }
             return !isFillUp;
         }
