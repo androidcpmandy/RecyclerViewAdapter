@@ -78,9 +78,9 @@ public class Demo5Activity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                dataSource.updateLocal(4, new DataSource.ItemCallback<String>() {
+                dataSource.updateLocal(4, new DataSource.ItemCallback() {
                     @Override
-                    public void callback(MultiTypeItem<String> item) {
+                    public void callback(MultiTypeItem item) {
                         item.data = "change!!!!!!!!!!";
                     }
                 });
