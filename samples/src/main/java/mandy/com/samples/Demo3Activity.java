@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import mandy.com.samples.views.LoadMoreView;
+import mandy.com.samples.views.LoadMoreView1;
 
 /**
  * 在Demo2Activity基础上增加了可自定义loadMore
@@ -88,7 +88,8 @@ public class Demo3Activity extends AppCompatActivity {
             @Override
             protected AbstractLoadMoreView createLoadMoreView(RecyclerView recyclerView) {
                 Log.e("mandy", "createLoadMoreView");
-                return new LoadMoreView(recyclerView, R.layout.customloadmore);
+//                return new LoadMoreView(recyclerView, R.layout.customloadmore);
+                return new LoadMoreView1(recyclerView, R.layout.customloadmore1);
             }
         });
     }

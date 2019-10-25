@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="100dp">
+
+    <!--    <View-->
+    <!--        android:id="@+id/icon"-->
+    <!--        android:layout_width="50dp"-->
+    <!--        android:layout_height="50dp"-->
+    <!--        android:layout_gravity="center_vertical"-->
+    <!--        android:layout_marginLeft="40dp"-->
+    <!--        android:background="#ff0000" />-->
+
+    <TextView
+        android:id="@+id/tv"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="#123456"
+        android:gravity="center"
+        android:text="自定义加载更多" />
+
+    <ProgressBar
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_vertical"
+        android:indeterminateTint="@color/colorPrimary"
+        android:layout_marginLeft="40dp" />
+
+</FrameLayout>

@@ -253,24 +253,39 @@ public class DataSource {
         checkOperationValid();
         if (withTransaction) {
             beginTransaction();
-            updateInternal(position, item);
+            updateInternal(position, item, false);
             endTransaction();
         } else {
-            updateInternal(position, item);
+            updateInternal(position, item, false);
         }
+    }
+
+    /**
+     * item局部刷新
+     */
+    public void updateLocal(int position, ItemCallback callback) {
+        MultiTypeItem item = get(position);
+        if (callback != null) {
+            callback.callback(item);
+        }
+        updateInternal(position, item, true);
     }
 
     public void update(final int position, final MultiTypeItem item) {
         update(position, item, true);
     }
 
-    private void updateInternal(final int position, final MultiTypeItem item) {
+    private void updateInternal(final int position, final MultiTypeItem item, final boolean local) {
         Runnable r = new Runnable() {
             @Override
             public void run() {
                 data.set(position, item);
                 if (adapter != null) {
-                    adapter.notifyItemChanged(position + offset);
+                    if (!local) {
+                        adapter.notifyItemChanged(position + offset);
+                    } else {
+                        adapter.notifyItemChanged(position + offset, item);
+                    }
                 }
             }
         };
@@ -386,10 +401,6 @@ public class DataSource {
         }
     }
 
-    /**
-     * 内部使用，忽略
-     */
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
     public interface ItemCallback {
         void callback(MultiTypeItem item);
     }

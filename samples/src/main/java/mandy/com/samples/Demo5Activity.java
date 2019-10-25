@@ -8,22 +8,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.View;
-import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.mandy.recyclerview.adapter.DataSource;
 import com.mandy.recyclerview.adapter.MultiTypeAdapter;
 import com.mandy.recyclerview.bean.MultiTypeItem;
-import com.mandy.recyclerview.itemdecoration.SpacesItemDecoration;
 import com.mandy.recyclerview.viewholder.ViewHolderForRecyclerView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 最基本MultiTypeAdapter使用方法,并包含刷新操作
+ * item中的布局刷新
  */
-public class Demo1Activity extends AppCompatActivity {
+public class Demo5Activity extends AppCompatActivity {
 
     private DataSource dataSource;
     private MultiTypeAdapter adapter;
@@ -36,21 +33,7 @@ public class Demo1Activity extends AppCompatActivity {
         initData();
         final RecyclerView recyclerView = findViewById(R.id.rv);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.addItemDecoration(new SpacesItemDecoration(80, false));
         recyclerView.setAdapter(adapter = new MultiTypeAdapter(dataSource) {
-
-            @Override
-            protected void initComponent(ViewHolderForRecyclerView holder, @NonNull ViewGroup parent, int layoutId) {
-                /*
-                 * 给每一个item都设置了点击事件，放到initComponent处理
-                 * */
-                holder.setViewClickListener(R.id.tv, new ViewHolderForRecyclerView.OnClickListener() {
-                    @Override
-                    public void onClick(View view, MultiTypeItem item, int position) {
-                        Log.e("mandy", "pos===" + position + " data==" + item.getData().toString());
-                    }
-                });
-            }
 
             @Override
             protected void onBindView(ViewHolderForRecyclerView holder, MultiTypeItem item, int position, int layoutId) {
@@ -67,8 +50,12 @@ public class Demo1Activity extends AppCompatActivity {
             }
 
             @Override
-            protected void loadMore() {
-                super.loadMore();
+            protected void onRefreshLocal(ViewHolderForRecyclerView holder, @NonNull List<Object> payloads, int position, int layoutId) {
+                Log.e("mandy", "onRefreshLocal");
+                super.onRefreshLocal(holder, payloads, position, layoutId);
+                MultiTypeItem item = (MultiTypeItem) payloads.get(0);
+                TextView tv = holder.getView(R.id.tv);
+                tv.setText(item.getData().toString());
             }
         });
 
@@ -76,7 +63,7 @@ public class Demo1Activity extends AppCompatActivity {
 
     private void initData() {
         dataSource = new DataSource.Configuration()
-                .withoutAnimation(true)//rv没有增删改的动画效果
+                .withoutAnimation(false)//rv没有增删改的动画效果
                 .loadingAlways(false)
                 .state(true)//拉到底部展示加载更多
                 .saveSate(false)
@@ -91,27 +78,12 @@ public class Demo1Activity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                Log.e("mandy", "模拟刷新操作");
-                List<MultiTypeItem> list = new ArrayList<>();
-//                for (int i = 0; i < 6; i++) {
-//                    list.add(new MultiTypeItem(R.layout.item_type1, "update_item_type1 "));
-//                    list.add(new MultiTypeItem(R.layout.item_type2, "update_item_type2 "));
-//                }
-                dataSource.refresh(list);
-
-                new Handler().postDelayed(new Runnable() {
+                dataSource.updateLocal(4, new DataSource.ItemCallback<String>() {
                     @Override
-                    public void run() {
-
-//                        dataSource.remove(1,8);
-                        List<MultiTypeItem> list = new ArrayList<>();
-                        for (int i = 0; i < 4; i++) {
-                            list.add(new MultiTypeItem(R.layout.item_type1, "update_item_type1 "));
-                            list.add(new MultiTypeItem(R.layout.item_type2, "update_item_type2 "));
-                        }
-                        dataSource.refresh(list);
+                    public void callback(MultiTypeItem<String> item) {
+                        item.data = "change!!!!!!!!!!";
                     }
-                }, 2000);
+                });
             }
         }, 3000);
     }

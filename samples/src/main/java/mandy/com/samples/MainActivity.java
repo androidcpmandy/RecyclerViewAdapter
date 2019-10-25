@@ -40,5 +40,12 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        findViewById(R.id.tv5).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, Demo5Activity.class);
+                startActivity(intent);
+            }
+        });
     }
 }
