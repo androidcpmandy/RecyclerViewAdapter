@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 
 import com.mandy.recyclerview.bean.MultiTypeItem;
 import com.mandy.recyclerview.interfaces.State;
@@ -671,5 +672,23 @@ public class DataSource {
 
     public interface Callback {
         void callback();
+    }
+
+    /**
+     * 根据指定的view找到该view对应的MultiTypeItem
+     * <p>
+     * offset未考虑
+     */
+    public MultiTypeItem getMultiTypeItem(View view) {
+        if (adapter != null && adapter.recyclerView != null) {
+            RecyclerView.ViewHolder holder = adapter.recyclerView.findContainingViewHolder(view);
+            if (holder != null && data != null) {
+                int position = holder.getAdapterPosition();
+                if (position + 2 <= data.size()) {//data未存放"加载更多"
+                    return data.get(position);
+                }
+            }
+        }
+        return null;
     }
 }

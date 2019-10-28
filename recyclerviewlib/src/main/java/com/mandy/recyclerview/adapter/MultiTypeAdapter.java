@@ -15,6 +15,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -363,15 +364,19 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public final void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-        if (!(holder instanceof ViewHolderForRecyclerView)) {
-            return;
+        try {
+            if (!(holder instanceof ViewHolderForRecyclerView)) {
+                return;
+            }
+            if (payloads.isEmpty()) {
+                super.onBindViewHolder(holder, position, payloads);
+            } else {
+                onRefreshLocal((ViewHolderForRecyclerView) holder, payloads, position, getItemViewType(position));
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            Log.e("mandy","exception when onBindViewHolder!!!!!!!!!!!!!!!!!!");
         }
-        if (payloads.isEmpty()) {
-            super.onBindViewHolder(holder, position, payloads);
-        } else {
-            onRefreshLocal((ViewHolderForRecyclerView) holder, payloads, position, getItemViewType(position));
-        }
-
     }
 
     /**
