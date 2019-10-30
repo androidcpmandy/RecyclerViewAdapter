@@ -43,7 +43,7 @@ public abstract class AbstractLoadMoreView extends FrameLayout {
     /**
      * 在这里做一些加载的动画
      */
-    public abstract void startLoading();
+    public abstract void startLoadingAnimation();
 
     /**
      * 结束动画

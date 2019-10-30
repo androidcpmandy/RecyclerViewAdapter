@@ -981,7 +981,6 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
         int oldState = state;
         state = loadMoreState;
-//        boolean statusChange = oldState != state;
         dataSource.updateState(state);
 
         if (recyclerView == null) {

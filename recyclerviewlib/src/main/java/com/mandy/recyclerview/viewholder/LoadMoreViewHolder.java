@@ -11,11 +11,17 @@ import com.mandy.recyclerview.view.AbstractLoadMoreView;
  */
 public class LoadMoreViewHolder extends ViewHolderForRecyclerView {
 
+    private int currentState;
+
     public LoadMoreViewHolder(View rootView) {
         super(rootView);
     }
 
     public void stateChange(@State int state) {
+        if (currentState == state) {
+            return;
+        }
+        currentState = state;
         if (!(getRootView() instanceof AbstractLoadMoreView)) {
             throw new IllegalStateException("rootView is not AbstractLoadMoreView");
         }
@@ -46,7 +52,7 @@ public class LoadMoreViewHolder extends ViewHolderForRecyclerView {
     }
 
     public void startLoading() {
-        ((AbstractLoadMoreView) getRootView()).startLoading();
+        ((AbstractLoadMoreView) getRootView()).startLoadingAnimation();
     }
 
 }

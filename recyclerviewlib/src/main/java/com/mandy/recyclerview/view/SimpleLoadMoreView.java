@@ -17,7 +17,7 @@ public class SimpleLoadMoreView extends AbstractLoadMoreView {
     }
 
     @Override
-    public void startLoading() {
+    public void startLoadingAnimation() {
 
     }
 
