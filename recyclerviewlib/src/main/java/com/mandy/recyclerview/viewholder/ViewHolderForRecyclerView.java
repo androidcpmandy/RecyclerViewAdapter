@@ -111,9 +111,20 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
      * 在initComponent中通过调用setViewClickListener来设置点击事件
      */
     public void setViewClickListener(@IdRes int resId, @NonNull final OnClickListener listener) {
-//        Logger.log("setViewClickListener");
+        setViewClickListener(resId, 1000, listener);
+    }
+
+    /**
+     * @param interval 点击间隔时间控制
+     */
+    public void setViewClickListener(@IdRes int resId, final long interval, @NonNull final OnClickListener listener) {
         View view = getView(resId);
         view.setOnClickListener(new ForbidClickListener() {
+
+            @Override
+            protected long getInterval() {
+                return interval;
+            }
 
             @Override
             protected void forbidClick(final View view) {

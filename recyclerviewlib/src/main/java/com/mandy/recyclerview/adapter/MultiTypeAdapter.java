@@ -373,9 +373,9 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             } else {
                 onRefreshLocal((ViewHolderForRecyclerView) holder, payloads, position, getItemViewType(position));
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-            Log.e("mandy","exception when onBindViewHolder!!!!!!!!!!!!!!!!!!");
+            Log.e("mandy", "exception when onBindViewHolder!!!!!!!!!!!!!!!!!!");
         }
     }
 
@@ -981,6 +981,7 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
         int oldState = state;
         state = loadMoreState;
+//        boolean statusChange = oldState != state;
         dataSource.updateState(state);
 
         if (recyclerView == null) {
@@ -1003,14 +1004,13 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         if (child != null) {
             RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(child);
-            if (holder == null || !(holder instanceof ViewHolderForRecyclerView)) {
+            if (!(holder instanceof ViewHolderForRecyclerView)) {
                 return;
             }
             /*
              * if分支保证加载更多item还在屏幕上
              * */
             if (holder instanceof LoadMoreViewHolder) {
-//                onBindViewHolder(holder, getAdjustPosition(holder));
                 boolean result = showLoadMore();
                 if (result) {
                     LoadMoreViewHolder loadMore = (LoadMoreViewHolder) holder;
