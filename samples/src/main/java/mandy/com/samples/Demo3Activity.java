@@ -36,6 +36,17 @@ public class Demo3Activity extends AppCompatActivity {
         setContentView(R.layout.activity_demo);
 
         final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.e("mandy","模拟刷新操作");
+                List<MultiTypeItem> list = new ArrayList<>();
+                for (int i = 0; i < 10; i++) {
+                    list.add(new MultiTypeItem(R.layout.item_type1, "refresh one"));
+                }
+                dataSource.refresh(list);
+            }
+        }, 10000);
         initData();
         RecyclerView recyclerView = findViewById(R.id.rv);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -76,7 +87,7 @@ public class Demo3Activity extends AppCompatActivity {
                     public void run() {
                         rightLoad();
                     }
-                }, 3000);
+                }, 1000);
             }
 
             @Override
@@ -115,20 +126,19 @@ public class Demo3Activity extends AppCompatActivity {
     private void rightLoad() {
         Random random = new Random();
         boolean result = random.nextBoolean();
-
-        result=true;
-
         if (result) {//表示成功加载
             List<MultiTypeItem> data = new ArrayList<>();
             Random r = new Random();
-            int size = r.nextInt(3) + 1;//随机产生数据长度
+            int size = r.nextInt(3);//随机产生数据长度
 
-            size = 1;
-
-            for (int i = 0; i < size; i++) {
-                data.add(new MultiTypeItem(R.layout.item_type1, "new data "));
+            if (size == 0) {
+                dataSource.loadMore(DataSource.NO_MORE);
+            } else {
+                for (int i = 0; i < size; i++) {
+                    data.add(new MultiTypeItem(R.layout.item_type1, "new data "));
+                }
+                dataSource.loadMore(data);
             }
-            dataSource.loadMore(data);
         } else {//表示成功失败
             dataSource.loadMore(DataSource.ERROR);
         }

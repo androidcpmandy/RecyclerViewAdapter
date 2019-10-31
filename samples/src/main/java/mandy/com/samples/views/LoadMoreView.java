@@ -23,7 +23,7 @@ public class LoadMoreView extends SimpleLoadMoreView {
     }
 
     @Override
-    public void startLoading() {
+    public void startLoadingAnimation() {
         Logger.log("开始加载");
         /*
          * 调用setRotation重置下，每次滑到底部加载更多item使用的

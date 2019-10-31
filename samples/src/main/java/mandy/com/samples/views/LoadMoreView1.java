@@ -1,7 +1,9 @@
 package mandy.com.samples.views;
 
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.mandy.recyclerview.log.Logger;
@@ -13,7 +15,7 @@ public class LoadMoreView1 extends SimpleLoadMoreView {
 
 //    private final LinearInterpolator linearInterpolator;
     private TextView tv;
-//    private View icon;
+    private ProgressBar progress;
 
     public LoadMoreView1(RecyclerView rv, int layoutId) {
         super(rv, layoutId);
@@ -21,8 +23,9 @@ public class LoadMoreView1 extends SimpleLoadMoreView {
     }
 
     @Override
-    public void startLoading() {
+    public void startLoadingAnimation() {
         Logger.log("开始加载");
+        progress.setVisibility(View.VISIBLE);
         /*
          * 调用setRotation重置下，每次滑到底部加载更多item使用的
          * 都是同一个holder中获取到，不重置下rotation，转圈动画会
@@ -41,17 +44,19 @@ public class LoadMoreView1 extends SimpleLoadMoreView {
     @Override
     public void onCreateView(final ViewGroup rootView) {
         tv = rootView.findViewById(R.id.tv);
-//        icon = rootView.findViewById(R.id.icon);
+        progress = rootView.findViewById(R.id.progress);
     }
 
     @Override
     public void noMore() {
 //        icon.animate().cancel();
-        tv.setText("空空");
+        tv.setText("加载到底部了！！");
+        progress.setVisibility(View.GONE);
     }
 
     @Override
     public void loading() {
+        progress.setVisibility(View.VISIBLE);
         tv.setText("玩命加载中...");
     }
 
@@ -59,10 +64,12 @@ public class LoadMoreView1 extends SimpleLoadMoreView {
     public void error() {
 //        icon.animate().cancel();
         tv.setText("挂了");
+        progress.setVisibility(View.GONE);
     }
 
     @Override
     public void reload() {
+        progress.setVisibility(View.VISIBLE);
         tv.setText("重新加载中......");
     }
 }

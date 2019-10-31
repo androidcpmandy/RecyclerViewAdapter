@@ -154,6 +154,7 @@ public class DataSource {
         }
         if (adapter != null) {
             adapter.moveToTop();
+            adapter.transformLoadMoreState(maybeShowLoadMore() ? State.LOAD_MORE : State.HIDE);
             adapter.notifyDataSetChanged();
         }
     }
@@ -449,7 +450,8 @@ public class DataSource {
      * @param loadingAlways 默认值为true，控制loadMore布局移出屏幕是否调用abortLoadMore
      */
     private void configRecyclerViewBehavior(boolean withoutAnimation, boolean saveSate,
-                                            @State int state, boolean loadingAlways, boolean debuggable) {
+                                            @State int state, boolean loadingAlways,
+                                            boolean debuggable) {
         if (config == null) {
             config = new Configuration();
         }
@@ -690,5 +692,10 @@ public class DataSource {
             }
         }
         return null;
+    }
+
+    private boolean maybeShowLoadMore() {
+        return config.state == State.LOAD_MORE || config.state == State.NO_MORE
+                || config.state == State.ERROR || config.state == State.RELOAD;
     }
 }
