@@ -1,17 +1,17 @@
 apply plugin: 'com.android.library'
 
-apply plugin: 'com.novoda.bintray-release'
+//apply plugin: 'com.novoda.bintray-release'
 //gradlew -p recyclerviewlib clean build bintrayUpload -PbintrayUser=mandy -PbintrayKey=fc2ceda94f8f84c40f0f5a52dd9eb02021215122 -PdryRun=false
 
-publish {
-    repoName = 'recyclerviewlib'
-    userOrg = 'mandy'//bintray.com用户名
-    groupId = 'com.mandy'//jcenter上的路径
-    artifactId = 'rvUtils'//项目名称
-    publishVersion = '2.1.17'//版本号
-    desc = 'lib的描述信息'//描述，不重要
-    website = 'http://www.baidu.com'//网站，最好有，不重要
-}
+//publish {
+//    repoName = 'recyclerviewlib'
+//    userOrg = 'mandy'//bintray.com用户名
+//    groupId = 'com.mandy'//jcenter上的路径
+//    artifactId = 'rvUtils'//项目名称
+//    publishVersion = '2.1.22'//版本号
+//    desc = 'lib的描述信息'//描述，不重要
+//    website = 'http://www.baidu.com'//网站，最好有，不重要
+//}
 
 
 android {

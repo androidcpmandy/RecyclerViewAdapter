@@ -150,9 +150,11 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             RecyclerView.ItemAnimator itemAnimator = recyclerView.getItemAnimator();
             if (itemAnimator instanceof DefaultItemAnimator) {
                 recyclerView.setItemAnimator(new CustomDefaultItemAnimator());
-                CustomDefaultItemAnimator animator = (CustomDefaultItemAnimator) recyclerView.getItemAnimator();
-                animator.setSupportsChangeAnimations(false);
-                animator.setChangeDuration(0);
+                //dataSource update调用时，以下代码最终将执行add动画，当add的item没有在rv缓存时
+                //创建item布局将导致闪烁问题
+//                CustomDefaultItemAnimator animator = (CustomDefaultItemAnimator) recyclerView.getItemAnimator();
+//                animator.setSupportsChangeAnimations(false);
+//                animator.setChangeDuration(0);
             }
         }
         gestureDetectorCompat = new GestureDetectorCompat(recyclerView.getContext(), new SingleClick());
