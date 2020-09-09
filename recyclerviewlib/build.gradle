@@ -13,6 +13,17 @@ apply plugin: 'com.android.library'
 //    website = 'http://www.baidu.com'//网站，最好有，不重要
 //}
 
+//androidx配置
+//publish {
+//    repoName = 'multiTypeAdapter'
+//    userOrg = 'mandy'//bintray.com用户名
+//    groupId = 'com.mandy.androidx'//jcenter上的路径
+//    artifactId = 'rvAdapter'//项目名称
+//    publishVersion = '1.0.0'//版本号
+//    desc = 'androidx recyclerview adapter库'//描述，不重要
+//    website = 'http://www.baidu.com'//网站，最好有，不重要
+//}
+
 
 android {
     compileSdkVersion 28
