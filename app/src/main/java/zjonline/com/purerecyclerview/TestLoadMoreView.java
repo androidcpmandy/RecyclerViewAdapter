@@ -11,7 +11,6 @@ import com.mandy.recyclerview.view.AbstractLoadMoreView;
 public class TestLoadMoreView extends AbstractLoadMoreView {
 
     private TextView tv;
-//    private MultiTypeAdapter adapter;
     private View icon;
 
     public TestLoadMoreView(RecyclerView rv, int layoutId) {
