@@ -19,7 +19,7 @@ public class TestLoadMoreView extends AbstractLoadMoreView {
     }
 
     @Override
-    public void startLoading() {
+    public void startLoadingAnimation() {
         Logger.log("开始加载");
         icon.setRotation(0);
         icon.animate().rotation(360 * 10).setDuration(3000 * 10).start();
