@@ -1,10 +1,11 @@
 package zjonline.com.purerecyclerview;
 
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.v7.util.ListUpdateCallback;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.ListUpdateCallback;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class TestListUpdateCallback implements ListUpdateCallback {
 

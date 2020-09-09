@@ -1,10 +1,5 @@
 package com.mandy.recyclerview.viewholder;
 
-import android.support.annotation.IdRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.RestrictTo;
-import android.support.v4.util.SparseArrayCompat;
-import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.TextView;
@@ -13,6 +8,12 @@ import com.mandy.recyclerview.adapter.DataSource;
 import com.mandy.recyclerview.bean.MultiTypeItem;
 import com.mandy.recyclerview.interfaces.ForbidClickListener;
 import com.mandy.recyclerview.log.Logger;
+
+import androidx.annotation.IdRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.RestrictTo;
+import androidx.collection.SparseArrayCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Created on 2017/7/4.

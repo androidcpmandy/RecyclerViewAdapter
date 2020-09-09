@@ -2,10 +2,11 @@ package zjonline.com.purerecyclerview;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class MyRV extends RecyclerView {
     public MyRV(Context context, @Nullable AttributeSet attrs) {

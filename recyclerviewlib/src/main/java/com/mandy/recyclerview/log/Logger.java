@@ -1,8 +1,9 @@
 package com.mandy.recyclerview.log;
 
-import android.support.annotation.RestrictTo;
 import android.text.TextUtils;
 import android.util.Log;
+
+import androidx.annotation.RestrictTo;
 
 @RestrictTo(RestrictTo.Scope.LIBRARY)
 public class Logger {

@@ -2,10 +2,11 @@ package com.mandy.recyclerview.layoutmanager;
 
 import android.content.Context;
 import android.graphics.PointF;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.LinearSmoothScroller;
 import android.util.DisplayMetrics;
+
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSmoothScroller;
 
 public class SmoothScroller extends LinearSmoothScroller {
 

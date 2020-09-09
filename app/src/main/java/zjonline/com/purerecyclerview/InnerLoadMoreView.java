@@ -1,10 +1,11 @@
 package zjonline.com.purerecyclerview;
 
-import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.mandy.recyclerview.view.SimpleLoadMoreView;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 public class InnerLoadMoreView extends SimpleLoadMoreView {
 

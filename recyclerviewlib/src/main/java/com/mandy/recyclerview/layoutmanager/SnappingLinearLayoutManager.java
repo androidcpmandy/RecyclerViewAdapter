@@ -2,11 +2,12 @@ package com.mandy.recyclerview.layoutmanager;
 
 import android.content.Context;
 import android.graphics.PointF;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.LinearSmoothScroller;
-import android.support.v7.widget.RecyclerView;
 
 import com.mandy.recyclerview.log.Logger;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSmoothScroller;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class SnappingLinearLayoutManager extends LinearLayoutManager {
 

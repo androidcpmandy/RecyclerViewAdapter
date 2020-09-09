@@ -5,16 +5,6 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.os.Build;
 import android.os.Parcelable;
-import android.support.annotation.CallSuper;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.util.SparseArrayCompat;
-import android.support.v4.view.GestureDetectorCompat;
-import android.support.v4.view.ViewCompat;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -32,7 +22,6 @@ import com.mandy.recyclerview.layoutmanager.SmoothScroller;
 import com.mandy.recyclerview.log.Logger;
 import com.mandy.recyclerview.view.AbstractLoadMoreView;
 import com.mandy.recyclerview.view.DefaultLoadMoreView;
-import com.mandy.recyclerview.view.StubView;
 import com.mandy.recyclerview.viewholder.LoadMoreViewHolder;
 import com.mandy.recyclerview.viewholder.ViewHolderForRecyclerView;
 
@@ -42,6 +31,17 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import androidx.annotation.CallSuper;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.collection.SparseArrayCompat;
+import androidx.core.view.GestureDetectorCompat;
+import androidx.core.view.ViewCompat;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Created on 2017/7/5.
@@ -241,8 +241,6 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         } else {
             rootView = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
             holder = new ViewHolderForRecyclerView(rootView, offset());
-
-//            holder = new ViewHolderForRecyclerView(generateStubView(layoutId), offset());
         }
 
         if (layoutId != LOAD_MORE_TYPE) {
@@ -261,19 +259,6 @@ public class MultiTypeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
         LinearLayoutManager llm = (LinearLayoutManager) layoutManager;
         return llm.getOrientation();
-    }
-
-    /**
-     * 有问题，弃用
-     */
-    private StubView generateStubView(int layoutId) {
-        StubView stubView = new StubView(recyclerView.getContext());
-        LayoutInflater.from(recyclerView.getContext()).inflate(layoutId, stubView, true);
-        View child = stubView.getChildAt(0);
-        ViewGroup.LayoutParams lp = child.getLayoutParams();
-        RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(lp.width, lp.height);
-        stubView.setLayoutParams(params);
-        return stubView;
     }
 
     /**

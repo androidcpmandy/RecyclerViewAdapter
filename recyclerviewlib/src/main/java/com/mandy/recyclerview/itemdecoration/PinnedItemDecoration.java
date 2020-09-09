@@ -3,14 +3,15 @@ package com.mandy.recyclerview.itemdecoration;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.support.annotation.DrawableRes;
-import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.mandy.recyclerview.viewholder.ViewHolderForRecyclerView;
+
+import androidx.annotation.DrawableRes;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class PinnedItemDecoration extends SpacesItemDecoration {
 

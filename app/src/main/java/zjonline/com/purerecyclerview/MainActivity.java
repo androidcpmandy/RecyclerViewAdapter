@@ -3,9 +3,6 @@ package zjonline.com.purerecyclerview;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +18,10 @@ import com.mandy.recyclerview.viewholder.ViewHolderForRecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class MainActivity extends Activity {
 
@@ -110,7 +111,7 @@ public class MainActivity extends Activity {
         data.add(new MultiTypeItem(R.layout.testlayout, "hello10"));
 
 
-        rv = (RecyclerView) findViewById(R.id.rv);
+        rv = findViewById(R.id.rv);
 
         /************************/
 
@@ -242,7 +243,7 @@ public class MainActivity extends Activity {
                     String text = (String) item.getData();
                     holder.setText(R.id.tv, text);
                 } else if (layoutId == R.layout.testlayout2) {
-                    RecyclerView recyclerView = (RecyclerView) holder.getView(R.id.rv);
+                    RecyclerView recyclerView = holder.getView(R.id.rv);
 
                     MultiTypeAdapter adapter = (MultiTypeAdapter) recyclerView.getAdapter();
                     Logger.log("adapter==" + recyclerView.getAdapter());

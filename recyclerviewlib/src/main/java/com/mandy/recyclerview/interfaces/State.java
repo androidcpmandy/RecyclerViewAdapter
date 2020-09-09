@@ -1,9 +1,9 @@
 package com.mandy.recyclerview.interfaces;
 
-import android.support.annotation.IntDef;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+
+import androidx.annotation.IntDef;
 
 @IntDef({State.NO_MORE, State.LOAD_MORE, State.HIDE, State.ERROR, State.RELOAD})
 @Retention(RetentionPolicy.SOURCE)

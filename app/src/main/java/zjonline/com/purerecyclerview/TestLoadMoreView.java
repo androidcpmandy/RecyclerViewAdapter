@@ -1,12 +1,13 @@
 package zjonline.com.purerecyclerview;
 
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.mandy.recyclerview.log.Logger;
 import com.mandy.recyclerview.view.AbstractLoadMoreView;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 public class TestLoadMoreView extends AbstractLoadMoreView {
 

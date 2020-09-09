@@ -1,11 +1,12 @@
 package com.mandy.recyclerview.view;
 
 import android.annotation.SuppressLint;
-import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.mandy.recyclerview.R;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 @SuppressLint("ViewConstructor")
 public class DefaultLoadMoreView extends SimpleLoadMoreView {

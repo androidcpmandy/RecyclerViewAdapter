@@ -23,19 +23,17 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-//    implementation 'com.android.support:appcompat-v7:26.1.0'
-//    implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-//    implementation 'com.android.support:appcompat-v7:25.3.1'
-    implementation 'com.android.support.constraint:constraint-layout:2.0.1'
-//    implementation 'com.android.support:recyclerview-v7:27.1.1'
-    implementation 'com.android.support:recyclerview-v7:28.0.0'
+//    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+
+//    implementation 'com.android.support.constraint:constraint-layout:2.0.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
+
+//    implementation 'com.android.support:recyclerview-v7:28.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+
     implementation project(':recyclerviewlib')
-
-//    implementation 'com.mandy:uiviews:1.1'
-
 //    implementation 'com.mandy:rvUtils:2.1.22'
-
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
     releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.4'
 }

@@ -1,10 +1,6 @@
 package com.mandy.recyclerview.adapter;
 
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.RestrictTo;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.mandy.recyclerview.bean.MultiTypeItem;
@@ -15,6 +11,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RestrictTo;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * 对adapter要操作的data数据源进行封装，通过该类实现对data和adapter的操作
