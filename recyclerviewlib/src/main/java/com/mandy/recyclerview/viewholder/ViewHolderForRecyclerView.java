@@ -128,7 +128,7 @@ public class ViewHolderForRecyclerView extends RecyclerView.ViewHolder {
             }
 
             @Override
-            protected void forbidClick(final View view) {
+            public void forbidClick(final View view) {
                 int position = getAdapterPosition();
                 final int offsetPos = position - offset;
                 if (position != RecyclerView.NO_POSITION) {
